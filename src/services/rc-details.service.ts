@@ -21,7 +21,7 @@ export interface RCDetailsEntry {
   color: string | null;
   norms_type: string | null;
   financer: string | null;
-  financed: boolean | null;
+  financed: number | null;
   insurance_company: string | null;
   insurance_policy_number: string | null;
   insurance_upto: Date | null;
@@ -29,7 +29,7 @@ export interface RCDetailsEntry {
   manufacturing_date_formatted: Date | null;
   registered_at: string | null;
   latest_by: Date | null;
-  less_info: boolean | null;
+  less_info: number | null;
   tax_upto: Date | null;
   tax_paid_upto: Date | null;
   cubic_capacity: number | null;
@@ -93,11 +93,21 @@ export class RCDetailsService {
    * Convert string date to Date object or null
    */
   private parseDate(dateString: string | null): Date | null {
-    if (!dateString || dateString === "" || dateString === "N/A") {
+    if (
+      !dateString ||
+      dateString === "" ||
+      dateString === "N/A" ||
+      dateString === "null"
+    ) {
       return null;
     }
     try {
-      return new Date(dateString);
+      const date = new Date(dateString);
+      // Check if the date is valid (not Invalid Date)
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -110,7 +120,12 @@ export class RCDetailsService {
     raw: string | null;
     formatted: Date | null;
   } {
-    if (!dateString || dateString === "" || dateString === "N/A") {
+    if (
+      !dateString ||
+      dateString === "" ||
+      dateString === "N/A" ||
+      dateString === "null"
+    ) {
       return { raw: null, formatted: null };
     }
 
@@ -124,7 +139,10 @@ export class RCDetailsService {
             parseInt(month) - 1,
             1,
           );
-          return { raw: dateString, formatted: formattedDate };
+          // Check if the date is valid
+          if (!isNaN(formattedDate.getTime())) {
+            return { raw: dateString, formatted: formattedDate };
+          }
         }
       }
       return { raw: dateString, formatted: null };
@@ -163,10 +181,10 @@ export class RCDetailsService {
       norms_type: apiData.norms_type || null,
       financer: apiData.financer || null,
       financed:
-        apiData.financed === "1"
-          ? true
-          : apiData.financed === "0"
-            ? false
+        apiData.financed === "1" || apiData.financed === "true"
+          ? 1
+          : apiData.financed === "0" || apiData.financed === "false"
+            ? 0
             : null,
       insurance_company: apiData.insurance_company || null,
       insurance_policy_number: apiData.insurance_policy_number || null,
@@ -175,7 +193,8 @@ export class RCDetailsService {
       manufacturing_date_formatted: manufacturingDates.formatted,
       registered_at: apiData.registered_at || null,
       latest_by: this.parseDate(apiData.latest_by),
-      less_info: apiData.less_info || null,
+      less_info:
+        apiData.less_info === true ? 1 : apiData.less_info === false ? 0 : null,
       tax_upto: this.parseDate(apiData.tax_upto),
       tax_paid_upto: this.parseDate(apiData.tax_paid_upto),
       cubic_capacity: apiData.cubic_capacity
@@ -255,7 +274,7 @@ export class RCDetailsService {
       norms_type: dbData.norms_type || "",
       financer: dbData.financer || "",
       financed:
-        dbData.financed === true ? "1" : dbData.financed === false ? "0" : "",
+        dbData.financed === 1 ? "true" : dbData.financed === 0 ? "false" : "",
       insurance_company: dbData.insurance_company || "",
       insurance_policy_number: dbData.insurance_policy_number || "",
       insurance_upto: dbData.insurance_upto?.toISOString().split("T")[0] ?? "",
@@ -264,7 +283,8 @@ export class RCDetailsService {
         dbData.manufacturing_date_formatted?.toISOString().split("T")[0] ?? "",
       registered_at: dbData.registered_at || "",
       latest_by: dbData.latest_by?.toISOString().split("T")[0] ?? "",
-      less_info: dbData.less_info || false,
+      less_info:
+        dbData.less_info === 1 ? true : dbData.less_info === 0 ? false : false,
       tax_upto: dbData.tax_upto?.toISOString().split("T")[0] ?? "",
       tax_paid_upto: dbData.tax_paid_upto?.toISOString().split("T")[0] ?? "",
       cubic_capacity: dbData.cubic_capacity?.toString() || "",
