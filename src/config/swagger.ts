@@ -1,7 +1,8 @@
 import swaggerJsdoc from 'swagger-jsdoc'
 import swaggerUi from 'swagger-ui-express'
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 const options = {
   definition: {
@@ -13,7 +14,7 @@ const options = {
     },
     servers: [
       {
-        url: `http://localhost:${PORT}`,
+         url: BASE_URL,
         description: 'Development server',
       },
     ],
