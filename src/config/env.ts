@@ -16,4 +16,6 @@ export const env = {
   DB_PASSWORD: process.env.DB_PASSWORD!,
   DB_NAME: process.env.DB_NAME!,
   DB_TABLE: process.env.DB_TABLE!,
+  RC_DB_TABLE: process.env.RC_DB_TABLE!,
 };
+
