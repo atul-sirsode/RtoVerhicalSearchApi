@@ -1,26 +1,36 @@
-import swaggerJsdoc from 'swagger-jsdoc'
-import swaggerUi from 'swagger-ui-express'
+import swaggerJsdoc from "swagger-jsdoc";
+import swaggerUi from "swagger-ui-express";
 
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 const options = {
   definition: {
-    openapi: '3.0.0',
+    openapi: "3.0.0",
     info: {
-      title: 'RTO Vehicle API',
-      version: '1.0.0',
-      description: 'API documentation for RTO Vehicle Dashboard backend',
+      title: "RTO Vehicle API",
+      version: "1.0.0",
+      description: "API documentation for RTO Vehicle Dashboard backend",
     },
     servers: [
       {
-         url: BASE_URL,
-        description: 'Development server',
+        url: BASE_URL,
+        description: "API server",
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+          description: "Enter your Bearer token (JWT)",
+        },
+      },
+    },
   },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'],
-}
+  apis: ["./src/routes/*.ts", "./src/controllers/*.ts"],
+};
 
-export const swaggerSpec = swaggerJsdoc(options)
-export { swaggerUi }
+export const swaggerSpec = swaggerJsdoc(options);
+export { swaggerUi };
