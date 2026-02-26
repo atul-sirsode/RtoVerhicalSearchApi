@@ -1959,6 +1959,95 @@ export async function getAllRolePermissions(
 
 /**
  * @swagger
+ * /api/role-permissions/user/{user_id}:
+ *   get:
+ *     summary: Get role permissions by user_id
+ *     tags: [Role Permissions]
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: Role permissions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Role permissions retrieved successfully"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/RolePermission'
+ *       404:
+ *         description: No role permissions found for this user
+ *       500:
+ *         description: Internal server error
+ */
+export async function getRolePermissionsByUserId(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const userIdParam = req.params.user_id;
+
+    if (!userIdParam) {
+      return res.status(400).json({
+        status: false,
+        message: "user_id parameter is required",
+        statuscode: 400,
+      });
+    }
+
+    const userIdStr = Array.isArray(userIdParam) ? userIdParam[0] : userIdParam;
+
+    if (!userIdStr) {
+      return res.status(400).json({
+        status: false,
+        message: "user_id parameter is required",
+        statuscode: 400,
+      });
+    }
+
+    const userId = parseInt(userIdStr);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid user_id parameter",
+        statuscode: 400,
+      });
+    }
+
+    console.log("Get role permissions by user_id request:", userId);
+    const userService = new UserService();
+    const result = await userService.getRolePermissionsByUserId(userId);
+
+    if (!result.status) {
+      const statusCode = result.statuscode || 500;
+      return res.status(statusCode).json(result);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error in getRolePermissionsByUserId controller:", err);
+    next(err);
+  }
+}
+
+/**
+ * @swagger
  * /api/role-permissions/create:
  *   post:
  *     summary: Create a new role permission

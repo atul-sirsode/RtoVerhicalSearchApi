@@ -1909,6 +1909,61 @@ export class UserService {
   }
 
   /**
+   * Get role permissions by user_id
+   * Returns all role permissions for roles assigned to the user
+   */
+  async getRolePermissionsByUserId(
+    user_id: number,
+  ): Promise<RolePermissionsResponse> {
+    const connection = await getConnection();
+    if (!connection) {
+      return {
+        status: false,
+        message: "Database connection failed",
+        statuscode: 500,
+      };
+    }
+
+    try {
+      const [rows] = await connection.execute(
+        `SELECT DISTINCT rp.*, r.role_name, p.perm_name as permission_name, u.email as user_email
+         FROM ${ROLE_PERMISSIONS_TABLE} rp
+         INNER JOIN ${ROLES_TABLE} r ON rp.role_id = r.role_id
+         INNER JOIN ${USER_ROLES_TABLE} ur ON r.role_id = ur.role_id
+         INNER JOIN ${USERS_TABLE} u ON ur.user_id = u.user_id
+         LEFT JOIN ${PERMISSIONS_TABLE} p ON rp.permission_id = p.permission_id
+         WHERE ur.user_id = ?
+         ORDER BY rp.role_id, rp.permission_id`,
+        [user_id],
+      );
+      await connection.end();
+
+      const data = rows as any[];
+      if (data.length === 0) {
+        return {
+          status: false,
+          message: "No role permissions found for this user",
+          statuscode: 404,
+        };
+      }
+
+      return {
+        status: true,
+        message: "Role permissions retrieved successfully",
+        data: data,
+      };
+    } catch (error) {
+      await connection.end();
+      console.error("Get role permissions by user_id error:", error);
+      return {
+        status: false,
+        message: "Failed to retrieve role permissions",
+        statuscode: 500,
+      };
+    }
+  }
+
+  /**
    * Create a new role permission
    */
   async createRolePermission(

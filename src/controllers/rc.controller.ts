@@ -159,7 +159,7 @@ export async function fetchRC(
   try {
     console.log("requestBody", req.body);
     const authHeader = req.headers.authorization;
-
+    const userAgentV1 = req.headers.useragent;
     if (!authHeader) {
       const errorResponse: ApiErrorResponse = {
         status: false,
@@ -169,11 +169,17 @@ export async function fetchRC(
       return res.status(401).json(errorResponse);
     }
 
-    const requestHeaders = {
+    const requestHeaders: Record<string, string> = {
       "Content-Type": "application/x-www-form-urlencoded",
       Accept: "application/json",
-      Authorization: authHeader,
+      Token: authHeader,
     };
+
+    if (userAgentV1) {
+      requestHeaders["User-Agent"] = (
+        Array.isArray(userAgentV1) ? userAgentV1[0] : userAgentV1
+      ) as string;
+    }
 
     const data = await proxyRequest<RCApiResponse>({
       url: `${env.API_BASE}/${env.RC_DETAILS_URL}`,
@@ -207,7 +213,8 @@ export async function fetchRCV2(
   try {
     console.log("requestBody", req.body);
     const authHeader = req.headers.authorization;
-
+    const userAgentV2 = req.headers.useragent;
+    console.log("userAgentV2", userAgentV2);
     if (!authHeader) {
       const errorResponse: ApiErrorResponse = {
         status: false,
@@ -231,11 +238,17 @@ export async function fetchRCV2(
 
     console.log("Cache miss, calling API for RC number:", rcNumber);
 
-    const requestHeaders = {
+    const requestHeaders: Record<string, string> = {
       "Content-Type": "application/x-www-form-urlencoded",
       Accept: "application/json",
-      Authorization: authHeader,
+      Token: authHeader,
     };
+
+    if (userAgentV2) {
+      requestHeaders["User-Agent"] = (
+        Array.isArray(userAgentV2) ? userAgentV2[0] : userAgentV2
+      ) as string;
+    }
 
     const data = await proxyRequest<RCApiResponse>({
       url: `${env.API_BASE}/${env.RC_DETAILS_URL}`,

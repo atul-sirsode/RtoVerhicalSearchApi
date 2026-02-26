@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getAllRolePermissions,
+  getRolePermissionsByUserId,
   createRolePermission,
   updateRolePermission,
   deleteRolePermission,
@@ -14,6 +15,9 @@ const router = Router();
 
 // Get all role permissions
 router.get("/", getAllRolePermissions);
+
+// Get role permissions by user_id
+router.get("/user/:user_id", getRolePermissionsByUserId);
 
 // Create role permission
 router.post("/create", createRolePermission);
