@@ -1,4 +1,4 @@
-import express from "express";
+﻿import express from "express";
 import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js";
@@ -7,6 +7,7 @@ import rcV1Routes from "./routes/rc.v1.routes.js";
 import rcV2Routes from "./routes/rc.v2.routes.js";
 import fileHistoryRoutes from "./routes/file-history.routes.js";
 import statesCitiesRoutes from "./routes/states-cities.routes.js";
+import tollGuruRoutes from "./routes/tollguru.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { swaggerSpec, swaggerUi } from "./config/swagger.js";
 
@@ -30,6 +31,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rc", rcRoutes);
 app.use("/api/file-history", fileHistoryRoutes);
 app.use("/api/states-cities", statesCitiesRoutes);
+app.use("/api/tollguru", tollGuruRoutes);
 
 // Versioned routes
 app.use("/api/v1/rc", rcV1Routes);

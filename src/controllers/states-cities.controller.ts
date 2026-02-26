@@ -1,6 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import { StatesCitiesService } from "../services/states-cities.service.js";
-import type { State, City } from "../services/states-cities.service.js";
+import type {
+  State,
+  City,
+  InsertCityRequest,
+  DeleteCityRequest,
+} from "../services/states-cities.service.js";
 
 /**
  * @swagger
@@ -24,6 +29,46 @@ import type { State, City } from "../services/states-cities.service.js";
  *           type: string
  *           description: Name of the city
  *           example: "Mumbai"
+ *     InsertCityRequest:
+ *       type: object
+ *       required:
+ *         - city_name
+ *         - iso_code
+ *       properties:
+ *         city_name:
+ *           type: string
+ *           description: Name of the city to insert
+ *           example: "New City"
+ *         iso_code:
+ *           type: string
+ *           description: ISO code of the state where the city should be added
+ *           example: "IN-MH"
+ *     DeleteCityRequest:
+ *       type: object
+ *       required:
+ *         - city_name
+ *         - iso_code
+ *       properties:
+ *         city_name:
+ *           type: string
+ *           description: Name of the city to delete
+ *           example: "Old City"
+ *         iso_code:
+ *           type: string
+ *           description: ISO code of the state where the city exists
+ *           example: "IN-MH"
+ *     InsertCityResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: boolean
+ *           example: true
+ *         message:
+ *           type: string
+ *           example: "City inserted successfully"
+ *         data:
+ *           type: object
+ *           $ref: '#/components/schemas/City'
  *     StatesResponse:
  *       type: object
  *       properties:
@@ -163,7 +208,7 @@ export async function getCitiesByState(
     }
 
     const statesCitiesService = new StatesCitiesService();
-    
+
     // Check if state exists
     const stateExists = await statesCitiesService.stateExists(iso_code);
     if (!stateExists) {
@@ -234,6 +279,273 @@ export async function getStats(
       status: true,
       message: "Statistics retrieved successfully",
       data: stats,
+    };
+
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * @swagger
+ * /api/states-cities/insert-city:
+ *   post:
+ *     summary: Insert a new city for a given state
+ *     tags: [States & Cities]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/InsertCityRequest'
+ *     responses:
+ *       200:
+ *         description: City inserted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "City inserted successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     city_name:
+ *                       type: string
+ *                       example: "New City"
+ *                     iso_code:
+ *                       type: string
+ *                       example: "IN-MH"
+ *                     state_name:
+ *                       type: string
+ *                       example: "Maharashtra"
+ *       400:
+ *         description: Bad request - missing or invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       404:
+ *         description: State not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       409:
+ *         description: City already exists for this state
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ */
+export async function insertCity(
+  req: Request<{}, {}, InsertCityRequest>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { city_name, iso_code } = req.body;
+
+    // Validate input
+    if (!city_name || !iso_code) {
+      const errorResponse = {
+        status: false,
+        message: "City name and ISO code are required",
+        statuscode: 400,
+      };
+      return res.status(400).json(errorResponse);
+    }
+
+    // Trim whitespace from city name
+    const trimmedCityName = city_name.trim();
+    if (!trimmedCityName) {
+      const errorResponse = {
+        status: false,
+        message: "City name cannot be empty",
+        statuscode: 400,
+      };
+      return res.status(400).json(errorResponse);
+    }
+
+    const statesCitiesService = new StatesCitiesService();
+    const result = await statesCitiesService.insertCity({
+      city_name: trimmedCityName,
+      iso_code: iso_code.trim(),
+    });
+
+    if (!result.success) {
+      // Determine appropriate status code based on error message
+      let statusCode = 500;
+      if (result.message.includes("does not exist")) {
+        statusCode = 404;
+      } else if (result.message.includes("already exists")) {
+        statusCode = 409;
+      } else if (
+        result.message.includes("required") ||
+        result.message.includes("empty")
+      ) {
+        statusCode = 400;
+      }
+
+      const errorResponse = {
+        status: false,
+        message: result.message,
+        statuscode: statusCode,
+      };
+      return res.status(statusCode).json(errorResponse);
+    }
+
+    const response = {
+      status: true,
+      message: result.message,
+      data: {
+        city_name: trimmedCityName,
+        iso_code: iso_code.trim(),
+        state_name: result.state_name,
+      },
+    };
+
+    res.json(response);
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * @swagger
+ * /api/states-cities/delete-city:
+ *   delete:
+ *     summary: Delete a city for a given state
+ *     tags: [States & Cities]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/DeleteCityRequest'
+ *     responses:
+ *       200:
+ *         description: City deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "City deleted successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     city_name:
+ *                       type: string
+ *                       example: "Old City"
+ *                     iso_code:
+ *                       type: string
+ *                       example: "IN-MH"
+ *                     state_name:
+ *                       type: string
+ *                       example: "Maharashtra"
+ *       400:
+ *         description: Bad request - missing or invalid data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       404:
+ *         description: State or city not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ */
+export async function deleteCity(
+  req: Request<{}, {}, DeleteCityRequest>,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { city_name, iso_code } = req.body;
+
+    // Validate input
+    if (!city_name || !iso_code) {
+      const errorResponse = {
+        status: false,
+        message: "City name and ISO code are required",
+        statuscode: 400,
+      };
+      return res.status(400).json(errorResponse);
+    }
+
+    // Trim whitespace from city name
+    const trimmedCityName = city_name.trim();
+    if (!trimmedCityName) {
+      const errorResponse = {
+        status: false,
+        message: "City name cannot be empty",
+        statuscode: 400,
+      };
+      return res.status(400).json(errorResponse);
+    }
+
+    const statesCitiesService = new StatesCitiesService();
+    const result = await statesCitiesService.deleteCity({
+      city_name: trimmedCityName,
+      iso_code: iso_code.trim(),
+    });
+
+    if (!result.success) {
+      // Determine appropriate status code based on error message
+      let statusCode = 500;
+      if (
+        result.message.includes("does not exist") ||
+        result.message.includes("not found")
+      ) {
+        statusCode = 404;
+      } else if (
+        result.message.includes("required") ||
+        result.message.includes("empty")
+      ) {
+        statusCode = 400;
+      }
+
+      const errorResponse = {
+        status: false,
+        message: result.message,
+        statuscode: statusCode,
+      };
+      return res.status(statusCode).json(errorResponse);
+    }
+
+    const response = {
+      status: true,
+      message: result.message,
+      data: {
+        city_name: trimmedCityName,
+        iso_code: iso_code.trim(),
+        state_name: result.state_name,
+      },
     };
 
     res.json(response);
