@@ -2359,6 +2359,56 @@ export class UserService {
   }
 
   /**
+   * Get user security flag by user_id
+   */
+  async getUserSecurityFlagByUserId(
+    user_id: number,
+  ): Promise<UserSecurityFlagResponse> {
+    const connection = await getConnection();
+    if (!connection) {
+      return {
+        status: false,
+        message: "Database connection failed",
+        statuscode: 500,
+      };
+    }
+
+    try {
+      const [rows] = await connection.execute(
+        `SELECT usf.*, u.email as user_email 
+         FROM ${USER_SECURITY_FLAGS_TABLE} usf
+         LEFT JOIN ${USERS_TABLE} u ON usf.user_id = u.user_id
+         WHERE usf.user_id = ?`,
+        [user_id],
+      );
+      await connection.end();
+
+      const data = rows as any[];
+      if (data.length === 0) {
+        return {
+          status: false,
+          message: "User security flag not found",
+          statuscode: 404,
+        };
+      }
+
+      return {
+        status: true,
+        message: "User security flag retrieved successfully",
+        data: data[0],
+      };
+    } catch (error) {
+      await connection.end();
+      console.error("Get user security flag by user_id error:", error);
+      return {
+        status: false,
+        message: "Failed to retrieve user security flag",
+        statuscode: 500,
+      };
+    }
+  }
+
+  /**
    * Create a new user security flag
    */
   async createUserSecurityFlag(

@@ -1519,6 +1519,75 @@ export async function deleteRole(
  *           type: integer
  *           description: User ID
  *           example: 1
+ *     Bank:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Bank ID
+ *           example: "HDFC"
+ *         name:
+ *           type: string
+ *           description: Bank name
+ *           example: "HDFC Bank"
+ *         enabled:
+ *           type: integer
+ *           description: Bank enabled status (1 = enabled, 0 = disabled)
+ *           example: 1
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *           example: "2026-02-26T12:49:35Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *           example: "2026-02-26T12:49:35Z"
+ *     CreateBankRequest:
+ *       type: object
+ *       required:
+ *         - id
+ *         - name
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Bank ID
+ *           example: "HDFC"
+ *         name:
+ *           type: string
+ *           description: Bank name
+ *           example: "HDFC Bank"
+ *         enabled:
+ *           type: integer
+ *           description: Bank enabled status (1 = enabled, 0 = disabled)
+ *           example: 1
+ *     UpdateBankRequest:
+ *       type: object
+ *       required:
+ *         - id
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Bank ID
+ *           example: "HDFC"
+ *         name:
+ *           type: string
+ *           description: Bank name
+ *           example: "HDFC Bank"
+ *         enabled:
+ *           type: integer
+ *           description: Bank enabled status (1 = enabled, 0 = disabled)
+ *           example: 1
+ *     DeleteBankRequest:
+ *       type: object
+ *       required:
+ *         - id
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: Bank ID
+ *           example: "HDFC"
  */
 
 // ==================== BANK CONTROLLERS ====================
@@ -2166,6 +2235,94 @@ export async function getAllUserSecurityFlags(
     res.json(result);
   } catch (err) {
     console.error("Error in getAllUserSecurityFlags controller:", err);
+    next(err);
+  }
+}
+
+/**
+ * @swagger
+ * /api/user-security-flags/{user_id}:
+ *   get:
+ *     summary: Get user security flag by user_id
+ *     tags: [User Security Flags]
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *         example: 1
+ *     responses:
+ *       200:
+ *         description: User security flag retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "User security flag retrieved successfully"
+ *                 data:
+ *                   $ref: '#/components/schemas/UserSecurityFlag'
+ *       404:
+ *         description: User security flag not found
+ *       500:
+ *         description: Internal server error
+ */
+export async function getUserSecurityFlagByUserId(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const userIdParam = req.params.user_id;
+
+    if (!userIdParam) {
+      return res.status(400).json({
+        status: false,
+        message: "user_id parameter is required",
+        statuscode: 400,
+      });
+    }
+
+    // Handle both string and string[] types
+    const userIdStr = Array.isArray(userIdParam) ? userIdParam[0] : userIdParam;
+
+    if (!userIdStr) {
+      return res.status(400).json({
+        status: false,
+        message: "user_id parameter is required",
+        statuscode: 400,
+      });
+    }
+
+    const userId = parseInt(userIdStr);
+
+    if (isNaN(userId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid user_id parameter",
+        statuscode: 400,
+      });
+    }
+
+    console.log("Get user security flag by user_id request:", userId);
+    const userService = new UserService();
+    const result = await userService.getUserSecurityFlagByUserId(userId);
+
+    if (!result.status) {
+      const statusCode = result.statuscode || 500;
+      return res.status(statusCode).json(result);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error in getUserSecurityFlagByUserId controller:", err);
     next(err);
   }
 }
