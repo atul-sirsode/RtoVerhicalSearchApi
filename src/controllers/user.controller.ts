@@ -291,8 +291,6 @@ export async function login(
   next: NextFunction,
 ) {
   try {
-    console.log("Login request body:", { email: req.body.email });
-
     const userService = new UserService();
     const result = await userService.login(req.body);
 
@@ -361,8 +359,6 @@ export async function getUserInfo(
   next: NextFunction,
 ) {
   try {
-    console.log("Get user info request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.getUserInfo(req.body);
 
@@ -431,8 +427,6 @@ export async function getUserPermissions(
   next: NextFunction,
 ) {
   try {
-    console.log("Get user permissions request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.getUserPermissions(req.body);
 
@@ -507,8 +501,6 @@ export async function getAllActiveUsers(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all active users request");
-
     const userService = new UserService();
     const users = await userService.getAllActiveUsers();
 
@@ -608,8 +600,6 @@ export async function createUser(
   next: NextFunction,
 ) {
   try {
-    console.log("Create user request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.createUser(req.body as CreateUserRequest);
 
@@ -680,8 +670,6 @@ export async function updateUser(
   next: NextFunction,
 ) {
   try {
-    console.log("Update user request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.updateUser(req.body as UpdateUserRequest);
 
@@ -729,8 +717,6 @@ export async function deleteUser(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete user request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.deleteUser(req.body as DeleteUserRequest);
 
@@ -787,8 +773,6 @@ export async function getAllPermissions(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all permissions request");
-
     const userService = new UserService();
     const permissions = await userService.getAllPermissions();
 
@@ -849,8 +833,6 @@ export async function createPermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Create permission request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.createPermission(
       req.body as CreatePermissionRequest,
@@ -918,8 +900,6 @@ export async function updatePermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Update permission request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.updatePermission(
       req.body as UpdatePermissionRequest,
@@ -971,8 +951,6 @@ export async function deletePermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete permission request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.deletePermission(
       req.body as DeletePermissionRequest,
@@ -1036,8 +1014,6 @@ export async function getAllRoles(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all roles request");
-
     const userService = new UserService();
     const roles = await userService.getAllRoles();
 
@@ -1094,8 +1070,6 @@ export async function createRole(
   next: NextFunction,
 ) {
   try {
-    console.log("Create role request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.createRole(req.body as CreateRoleRequest);
 
@@ -1157,8 +1131,6 @@ export async function updateRole(
   next: NextFunction,
 ) {
   try {
-    console.log("Update role request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.updateRole(req.body as UpdateRoleRequest);
 
@@ -1208,8 +1180,6 @@ export async function deleteRole(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete role request body:", req.body);
-
     const userService = new UserService();
     const result = await userService.deleteRole(req.body as DeleteRoleRequest);
 
@@ -1625,7 +1595,6 @@ export async function getAllBanks(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all banks request");
     const userService = new UserService();
     const result = await userService.getAllBanks();
     res.json(result);
@@ -1665,7 +1634,6 @@ export async function createBank(
   next: NextFunction,
 ) {
   try {
-    console.log("Create bank request body:", req.body);
     const userService = new UserService();
     const result = await userService.createBank(req.body);
     res.status(201).json(result);
@@ -1705,7 +1673,6 @@ export async function updateBank(
   next: NextFunction,
 ) {
   try {
-    console.log("Update bank request body:", req.body);
     const userService = new UserService();
     const result = await userService.updateBank(req.body);
     res.json(result);
@@ -1741,7 +1708,6 @@ export async function deleteBank(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete bank request body:", req.body);
     const userService = new UserService();
     const result = await userService.deleteBank(req.body);
     res.json(result);
@@ -1786,7 +1752,6 @@ export async function getAllUserPermissions(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all user permissions request");
     const userService = new UserService();
     const result = await userService.getAllUserPermissions();
     res.json(result);
@@ -1826,7 +1791,6 @@ export async function createUserPermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Create user permission request body:", req.body);
     const userService = new UserService();
     const result = await userService.createUserPermission(req.body);
     res.status(201).json(result);
@@ -1866,7 +1830,6 @@ export async function updateUserPermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Update user permission request body:", req.body);
     const userService = new UserService();
     const result = await userService.updateUserPermission(req.body);
     res.json(result);
@@ -1902,7 +1865,6 @@ export async function deleteUserPermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete user permission request body:", req.body);
     const userService = new UserService();
     const result = await userService.deleteUserPermission(req.body);
     res.json(result);
@@ -1947,7 +1909,6 @@ export async function getAllRolePermissions(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all role permissions request");
     const userService = new UserService();
     const result = await userService.getAllRolePermissions();
     res.json(result);
@@ -2030,7 +1991,6 @@ export async function getRolePermissionsByUserId(
       });
     }
 
-    console.log("Get role permissions by user_id request:", userId);
     const userService = new UserService();
     const result = await userService.getRolePermissionsByUserId(userId);
 
@@ -2076,7 +2036,6 @@ export async function createRolePermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Create role permission request body:", req.body);
     const userService = new UserService();
     const result = await userService.createRolePermission(req.body);
     res.status(201).json(result);
@@ -2116,7 +2075,6 @@ export async function updateRolePermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Update role permission request body:", req.body);
     const userService = new UserService();
     const result = await userService.updateRolePermission(req.body);
     res.json(result);
@@ -2152,7 +2110,6 @@ export async function deleteRolePermission(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete role permission request body:", req.body);
     const userService = new UserService();
     const result = await userService.deleteRolePermission(req.body);
     res.json(result);
@@ -2197,7 +2154,6 @@ export async function getAllUserRoles(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all user roles request");
     const userService = new UserService();
     const result = await userService.getAllUserRoles();
     res.json(result);
@@ -2237,7 +2193,6 @@ export async function createUserRole(
   next: NextFunction,
 ) {
   try {
-    console.log("Create user role request body:", req.body);
     const userService = new UserService();
     const result = await userService.createUserRole(req.body);
     res.status(201).json(result);
@@ -2273,7 +2228,6 @@ export async function deleteUserRole(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete user role request body:", req.body);
     const userService = new UserService();
     const result = await userService.deleteUserRole(req.body);
     res.json(result);
@@ -2318,7 +2272,6 @@ export async function getAllUserSecurityFlags(
   next: NextFunction,
 ) {
   try {
-    console.log("Get all user security flags request");
     const userService = new UserService();
     const result = await userService.getAllUserSecurityFlags();
     res.json(result);
@@ -2400,7 +2353,6 @@ export async function getUserSecurityFlagByUserId(
       });
     }
 
-    console.log("Get user security flag by user_id request:", userId);
     const userService = new UserService();
     const result = await userService.getUserSecurityFlagByUserId(userId);
 
@@ -2446,7 +2398,6 @@ export async function createUserSecurityFlag(
   next: NextFunction,
 ) {
   try {
-    console.log("Create user security flag request body:", req.body);
     const userService = new UserService();
     const result = await userService.createUserSecurityFlag(req.body);
     res.status(201).json(result);
@@ -2486,7 +2437,6 @@ export async function updateUserSecurityFlag(
   next: NextFunction,
 ) {
   try {
-    console.log("Update user security flag request body:", req.body);
     const userService = new UserService();
     const result = await userService.updateUserSecurityFlag(req.body);
     res.json(result);
@@ -2522,7 +2472,6 @@ export async function deleteUserSecurityFlag(
   next: NextFunction,
 ) {
   try {
-    console.log("Delete user security flag request body:", req.body);
     const userService = new UserService();
     const result = await userService.deleteUserSecurityFlag(req.body);
     res.json(result);

@@ -26,7 +26,6 @@ async function testLoginAuthentication() {
       console.log("- Is Active:", loginResult.data.is_active);
       console.log("- Is Admin:", loginResult.data.is_admin);
       console.log("- Bypass OTP:", loginResult.data.bypass_otp);
-      console.log("- JWT Secret:", loginResult.data.jwt_secret);
       console.log("- Partner ID:", loginResult.data.partner_id);
       console.log("- Last Login:", loginResult.data.last_login);
     }
@@ -109,8 +108,8 @@ async function testLoginAuthentication() {
     console.log("\n📝 API Usage Example:");
     console.log("POST /api/users/login");
     console.log("{");
-    console.log('  "email": "transcologistic0011@gmail.com",');
-    console.log('  "password": "password123"');
+    console.log('  "email": "user@example.com",');
+    console.log('  "password": "********"');
     console.log("}");
 
     console.log("\n🔒 Security Considerations:");

@@ -1,11 +1,13 @@
-﻿import type { Request, Response, NextFunction } from "express"
-import { proxyRequest } from "../services/proxy.service.js"
-import { env } from "../config/env.js"
+﻿import type { Request, Response, NextFunction } from "express";
+import { proxyRequest } from "../services/proxy.service.js";
+import { env } from "../config/env.js";
 
 import type {
-    LoginDetails,
-    LoginOTPResponse, VerifyOtp, VerifyOTPResponse
-} from "../types/types/auth.types.js"
+  LoginDetails,
+  LoginOTPResponse,
+  VerifyOtp,
+  VerifyOTPResponse,
+} from "../types/types/auth.types.js";
 
 /**
  * @swagger
@@ -90,32 +92,28 @@ import type {
  */
 
 export async function login(
-    req: Request<{}, {}, LoginDetails>,
-    res: Response<LoginOTPResponse>,
-    next: NextFunction
+  req: Request<{}, {}, LoginDetails>,
+  res: Response<LoginOTPResponse>,
+  next: NextFunction,
 ) {
-    try {
-        console.log("requestBody", req.body)
+  try {
+    const requestHeaders = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
+    };
 
-        const requestHeaders = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Accept: "application/json"
-        }
+    const data = await proxyRequest<LoginOTPResponse>({
+      url: `${env.API_BASE}/${env.LOGIN_OTP_URL}`,
+      method: "POST",
+      data: req.body,
+      headers: requestHeaders,
+    });
 
-        const data = await proxyRequest<LoginOTPResponse>({
-            url: `${env.API_BASE}/${env.LOGIN_OTP_URL}`,
-            method: "POST",
-            data: req.body,
-            headers: requestHeaders
-        })
-
-        res.json(data)
-    } catch (err) {
-        next(err)
-    }
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
 }
-
-
 
 /**
  * @swagger
@@ -145,27 +143,25 @@ export async function login(
  */
 
 export async function VerifyLogin(
-    req: Request<{}, {}, VerifyOtp>,
-    res: Response<VerifyOTPResponse>,
-    next: NextFunction
+  req: Request<{}, {}, VerifyOtp>,
+  res: Response<VerifyOTPResponse>,
+  next: NextFunction,
 ) {
-    try {
-        console.log("requestBody", req.body)
+  try {
+    const requestHeaders = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
+    };
 
-        const requestHeaders = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Accept: "application/json"
-        }
+    const data = await proxyRequest<VerifyOTPResponse>({
+      url: `${env.API_BASE}/${env.VERIFY_OTP_URL}`,
+      method: "POST",
+      data: req.body,
+      headers: requestHeaders,
+    });
 
-        const data = await proxyRequest<VerifyOTPResponse>({
-            url: `${env.API_BASE}/${env.VERIFY_OTP_URL}`,
-            method: "POST",
-            data: req.body,
-            headers: requestHeaders
-        })
-
-        res.json(data)
-    } catch (err) {
-        next(err)
-    }
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
 }

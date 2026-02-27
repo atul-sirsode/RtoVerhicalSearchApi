@@ -177,8 +177,6 @@ export async function analyzeTolls(
   next: NextFunction,
 ) {
   try {
-    console.log("Toll analysis request body:", req.body);
-
     const { options, ...tollRequest } = req.body;
 
     const tollAnalysisService = new TollAnalysisService();
@@ -278,8 +276,6 @@ export async function compareRoutes(
   next: NextFunction,
 ) {
   try {
-    console.log("Route comparison request body:", req.body);
-
     const tollAnalysisService = new TollAnalysisService();
 
     // First get the toll analysis

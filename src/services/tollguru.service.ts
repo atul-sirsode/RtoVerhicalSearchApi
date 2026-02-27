@@ -12,6 +12,57 @@ const TOLLGURU_API_KEY = env.TOLLGURU_API_KEY;
 const TOLLGURU_BASE_URL = env.TOLLGURU_BASE_URL;
 const TOLLGURU_ENDPOINT = env.TOLLGURU_ENDPOINT;
 
+enum TollType {
+  Barrier = "barrier",
+  DistBarrier = "distBarrier",
+  TicketSystem1 = "ticketSystem1",
+  TicketSystem2 = "ticketSystem2",
+  TicketSystem3 = "ticketSystem3",
+}
+interface RouteInfo {
+  routeName: string;
+  distance: string;
+  duration: string;
+  fastagTotal: number;
+  tollSegments: { name: string; amount: number }[];
+}
+interface Toll {
+  type: string;
+  name?: string;
+  start?: {
+    name?: string;
+  };
+  end?: {
+    name?: string;
+  };
+}
+
+export const getTollName = (toll: Toll) => {
+  switch (toll.type) {
+    case TollType.Barrier:
+    case TollType.DistBarrier:
+      return toll.name || "";
+    case TollType.TicketSystem1:
+    case TollType.TicketSystem2:
+    case TollType.TicketSystem3: {
+      const startName = toll.start?.name ?? "";
+      const endName = toll.end?.name ?? "";
+
+      if (startName && endName) {
+        return `${startName} to ${endName}`;
+      }
+
+      if (startName || endName) {
+        return startName || endName;
+      }
+
+      return toll.name || "";
+    }
+    default:
+      return toll.name || "";
+  }
+};
+
 export class TollGuruService {
   /**
    * Get toll information between origin and destination
@@ -199,7 +250,7 @@ export class TollGuruService {
     if (route.tolls && Array.isArray(route.tolls)) {
       route.tolls.forEach((toll: any, index: number) => {
         const processedToll: any = {
-          name: toll.name || `Toll ${index + 1}`,
+          name: getTollName(toll),
           tagCost: toll.tagCost || toll.cost || 0,
           cashCost: toll.cashCost,
           arrival: toll.arrival,
@@ -208,6 +259,42 @@ export class TollGuruService {
           type: toll.type,
           road: toll.road,
         };
+
+        // Calculate first toll details using start and end arrival data
+        if (toll.start?.arrival && toll.end?.arrival) {
+          const startDistance = toll.start.arrival.distance || 0;
+          const endDistance = toll.end.arrival.distance || 0;
+          const segmentDistance = endDistance - startDistance;
+
+          const startTime = toll.start.arrival.time
+            ? new Date(toll.start.arrival.time)
+            : null;
+          const endTime = toll.end.arrival.time
+            ? new Date(toll.end.arrival.time)
+            : null;
+
+          let segmentTime = 0;
+          let averageSpeed = 0;
+
+          if (startTime && endTime) {
+            segmentTime = (endTime.getTime() - startTime.getTime()) / 1000; // seconds
+            if (segmentDistance > 0 && segmentTime > 0) {
+              averageSpeed = segmentDistance / 1000 / (segmentTime / 3600); // km/h
+            }
+          }
+
+          processedToll.tollSegmentDetails = {
+            startDistance,
+            endDistance,
+            segmentDistance,
+            startTime,
+            endTime,
+            segmentTime, // in seconds
+            averageSpeed, // in km/h
+            formattedSegmentTime:
+              segmentTime > 0 ? this.formatDuration(segmentTime) : "",
+          };
+        }
 
         if (toll.arrival && toll.arrival.time) {
           processedToll.estimatedArrivalTime = new Date(toll.arrival.time);
@@ -232,7 +319,37 @@ export class TollGuruService {
       Boolean,
     ).length;
     const meetsCriteria = labelCount >= 2 || hasPractical;
+    const durationSeconds = route.summary?.duration?.value || 0;
 
+    const etaInfo = this.calculateETA(
+      durationSeconds,
+      30, // min buffer
+      60, // max buffer
+      new Date(), // live start time
+    );
+
+    // Add ETA info to each toll
+    tolls.forEach((toll, index) => {
+      let estimatedArrivalTime = toll.estimatedArrivalTime;
+
+      // For first toll or tolls without estimatedArrivalTime, use tollSegmentDetails
+      if (!estimatedArrivalTime && toll.tollSegmentDetails) {
+        // Use the end time of the segment as the arrival time for this toll
+        estimatedArrivalTime = toll.tollSegmentDetails.endTime;
+      }
+
+      toll.etaInfo = {
+        sequence: index + 1,
+        estimatedArrival: estimatedArrivalTime,
+        timeFromStart: estimatedArrivalTime
+          ? (estimatedArrivalTime.getTime() - etaInfo.startTime.getTime()) /
+            1000
+          : 0,
+        formattedArrivalTime: estimatedArrivalTime
+          ? estimatedArrivalTime.toLocaleString()
+          : "",
+      };
+    });
     return {
       routeIndex,
       routeName: route.summary?.name || `Route ${routeIndex + 1}`,
@@ -247,9 +364,79 @@ export class TollGuruService {
       estimatedArrivalTime: new Date(
         Date.now() + (route.summary?.duration?.value || 0) * 1000,
       ),
+      etaInfo,
       tolls,
-      tollSequence: [], // Simplified for now
+      tollSequence: tolls.map((toll, index) => ({
+        sequence: index + 1,
+        name: toll.name,
+        cost: toll.tagCost,
+        type: toll.type,
+      })),
+      routeInfo: {
+        routeName: route.summary?.name || `Route ${routeIndex + 1}`,
+        distance: route.summary?.distance?.metric || "",
+        duration: route.summary?.duration?.text || "",
+        fastagTotal: totalTollCost,
+        tollSegments: tolls.map((toll) => ({
+          name: getTollName(toll),
+          amount: toll.tagCost,
+        })),
+      },
     };
+  }
+  /**
+   * Calculate estimated time of arrival (ETA)
+   */
+  private calculateETA(
+    durationSeconds: number,
+    bufferMinMinutes = 30,
+    bufferMaxMinutes = 60,
+    startTime?: Date,
+  ) {
+    const start = startTime ?? new Date();
+
+    const baseDurationMs = durationSeconds * 1000;
+    const minBufferMs = bufferMinMinutes * 60 * 1000;
+    const maxBufferMs = bufferMaxMinutes * 60 * 1000;
+
+    const baseEta = new Date(start.getTime() + baseDurationMs);
+    const etaWithMinBuffer = new Date(baseEta.getTime() + minBufferMs);
+    const etaWithMaxBuffer = new Date(baseEta.getTime() + maxBufferMs);
+
+    return {
+      startTime: start,
+      baseDurationMs,
+      baseDurationMinutes: Math.floor(durationSeconds / 60),
+      baseEta,
+      etaWithMinBuffer,
+      etaWithMaxBuffer,
+      processingWindowMinutes: {
+        min: bufferMinMinutes,
+        max: bufferMaxMinutes,
+      },
+      totalProcessingTimeMs: baseDurationMs + minBufferMs,
+    };
+  }
+
+  /**
+   * Format duration in seconds to human-readable format
+   */
+  private formatDuration(seconds: number): string {
+    if (seconds <= 0) return "0 seconds";
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    const parts = [];
+    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? "s" : ""}`);
+    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? "s" : ""}`);
+    if (remainingSeconds > 0 || parts.length === 0)
+      parts.push(
+        `${remainingSeconds} second${remainingSeconds !== 1 ? "s" : ""}`,
+      );
+
+    return parts.join(" ");
   }
 
   /**

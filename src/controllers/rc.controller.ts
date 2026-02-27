@@ -160,7 +160,6 @@ export async function fetchRC(
   next: NextFunction,
 ) {
   try {
-    console.log("requestBody", req.body);
     const token = req.headers.token;
     const partnerId = req.headers.partnerid;
     const authHeader = req.headers.authorization;
@@ -204,7 +203,6 @@ export async function fetchRC(
       headers: requestHeaders,
     });
 
-    console.log("Response Data", data);
     res.json(data);
   } catch (err) {
     next(err);
@@ -227,14 +225,10 @@ export async function fetchRCV2(
   next: NextFunction,
 ) {
   try {
-    console.log("requestBody", req.body);
     const token = req.headers.token;
     const authHeader = req.headers.authorization;
     const partnerId = req.headers.partnerid;
 
-    console.log("partnerId", partnerId);
-    console.log("token", token);
-    console.log("authHeader", authHeader);
     if (!authHeader && !token) {
       const errorResponse: ApiErrorResponse = {
         status: false,
@@ -257,15 +251,12 @@ export async function fetchRCV2(
     const rcNumber = req.body.id_number;
 
     // First, try to get from cache
-    console.log("Checking cache for RC number:", rcNumber);
     const cachedData = await rcDetailsService.getRCDetails(rcNumber);
 
     if (cachedData) {
-      console.log("Returning cached data for RC number:", rcNumber);
       return res.json(cachedData);
     }
 
-    console.log("Cache miss, calling API for RC number:", rcNumber);
     const Token = token ?? authHeader;
     const requestHeaders: Record<string, string> = {
       "Content-Type": "application/json",

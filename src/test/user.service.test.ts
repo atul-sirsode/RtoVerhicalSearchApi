@@ -25,7 +25,6 @@ async function testUserService() {
       console.log("- Is Active:", userInfoResult.data.is_active);
       console.log("- Is Admin:", userInfoResult.data.is_admin);
       console.log("- Bypass OTP:", userInfoResult.data.bypass_otp);
-      console.log("- JWT Secret:", userInfoResult.data.jwt_secret);
       console.log("- Partner ID:", userInfoResult.data.partner_id);
       console.log("- Created:", userInfoResult.data.created_at);
     }
@@ -82,7 +81,6 @@ async function testUserService() {
         console.log("- ID:", user.user_id);
         console.log("- Username:", user.username);
         console.log("- Email:", user.email);
-        console.log("- JWT Secret:", user.jwt_secret);
         console.log("- Partner ID:", user.partner_id);
         console.log("- Created:", user.created_at);
       });

@@ -182,8 +182,6 @@ export async function getTollInfo(
   next: NextFunction,
 ) {
   try {
-    console.log("TollGuru request body:", req.body);
-
     const { includeAnalysis, analysisOptions, ...tollRequest } = req.body;
 
     const tollGuruService = new TollGuruService();
