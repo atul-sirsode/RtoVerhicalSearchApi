@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getAllUserPermissions,
+  getUserPermissionsByUserId,
   createUserPermission,
   updateUserPermission,
   deleteUserPermission,
@@ -14,6 +15,9 @@ const router = Router();
 
 // Get all user permissions
 router.get("/", getAllUserPermissions);
+
+// Get user permissions by user_id
+router.get("/:user_id", getUserPermissionsByUserId);
 
 // Create user permission
 router.post("/create", createUserPermission);

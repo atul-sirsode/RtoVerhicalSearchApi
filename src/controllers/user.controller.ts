@@ -1763,6 +1763,95 @@ export async function getAllUserPermissions(
 
 /**
  * @swagger
+ * /api/user-permissions/{user_id}:
+ *   get:
+ *     summary: Get user permissions by user ID
+ *     tags: [User Permissions]
+ *     parameters:
+ *       - in: path
+ *         name: user_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: User ID
+ *         example: 123
+ *     responses:
+ *       200:
+ *         description: User permissions retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "User permissions retrieved successfully"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/UserPermission'
+ *       404:
+ *         description: User not found or has no permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserApiResponse'
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserApiResponse'
+ */
+export async function getUserPermissionsByUserId(
+  req: Request<{ user_id: string }>,
+  res: Response<UserPermissionsResponse>,
+  next: NextFunction,
+) {
+  try {
+    const { user_id } = req.params;
+
+    // Validate user_id parameter
+    if (!user_id || isNaN(Number(user_id))) {
+      return res.status(400).json({
+        status: false,
+        message: "Valid user_id is required",
+        statuscode: 400,
+      });
+    }
+
+    const userService = new UserService();
+    const result = await userService.getUserPermissionsByUserId(
+      Number(user_id),
+    );
+
+    if (!result.status) {
+      const statusCode = result.statuscode || 500;
+      return res.status(statusCode).json(result);
+    }
+
+    // If no permissions found, return empty array with success status
+    if (!result.data || result.data.length === 0) {
+      return res.json({
+        status: true,
+        message:
+          "User permissions retrieved successfully (no permissions found)",
+        data: [],
+      });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("Error in getUserPermissionsByUserId controller:", err);
+    next(err);
+  }
+}
+
+/**
+ * @swagger
  * /api/user-permissions/create:
  *   post:
  *     summary: Create a new user permission

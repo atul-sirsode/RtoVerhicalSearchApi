@@ -1623,6 +1623,49 @@ export class UserService {
   }
 
   /**
+   * Get user permissions by user_id
+   */
+  async getUserPermissionsByUserId(
+    user_id: number,
+  ): Promise<UserPermissionsResponse> {
+    const connection = await getConnection();
+    if (!connection) {
+      return {
+        status: false,
+        message: "Database connection failed",
+        statuscode: 500,
+      };
+    }
+
+    try {
+      const [rows] = await connection.execute(
+        `SELECT up.*, u.email as user_email,p.perm_key as permission_key, p.perm_name as permission_name 
+         FROM ${USER_PERMISSIONS_TABLE} up
+         LEFT JOIN ${USERS_TABLE} u ON up.user_id = u.user_id
+         LEFT JOIN ${PERMISSIONS_TABLE} p ON up.permission_id = p.permission_id
+         WHERE up.user_id = ?
+         ORDER BY up.permission_id`,
+        [user_id],
+      );
+      await connection.end();
+
+      return {
+        status: true,
+        message: "User permissions retrieved successfully",
+        data: rows as any[],
+      };
+    } catch (error) {
+      await connection.end();
+      console.error("Get user permissions by user_id error:", error);
+      return {
+        status: false,
+        message: "Failed to retrieve user permissions",
+        statuscode: 500,
+      };
+    }
+  }
+
+  /**
    * Create a new user permission
    */
   async createUserPermission(
