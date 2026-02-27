@@ -14,12 +14,7 @@ async function testJwtService() {
   const userId = 123;
   const userEmail = "test@example.com";
 
-  const tokenResponse = jwtService.generateToken(
-    userJwtSecret,
-    userPartnerId,
-    userId,
-    userEmail,
-  );
+  const tokenResponse = jwtService.generateToken(userJwtSecret, userPartnerId);
 
   console.log("Generated Token:", tokenResponse.token);
   console.log("Token Payload:");
@@ -133,20 +128,14 @@ async function testJwtService() {
 
   // Test 9: Test with null values
   console.log("9. Testing token generation with null values:");
-  const nullTokenResponse = jwtService.generateToken(
-    null,
-    null,
-    undefined,
-    undefined,
-  );
+  const nullTokenResponse = jwtService.generateToken(null, null);
 
   console.log("Generated Token (Null Values):", nullTokenResponse.token);
   console.log("Token Payload (Null Values):");
   console.log("- Timestamp:", nullTokenResponse.payload.timestamp);
   console.log("- Partner ID:", nullTokenResponse.payload.partnerId);
   console.log("- Request ID:", nullTokenResponse.payload.reqid);
-  console.log("- User ID:", nullTokenResponse.payload.userId);
-  console.log("- Email:", nullTokenResponse.payload.email);
+
   console.log("");
 
   // Test 10: Verify null value token with default secret

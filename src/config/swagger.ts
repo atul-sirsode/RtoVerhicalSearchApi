@@ -20,11 +20,17 @@ const options = {
     ],
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT",
-          description: "Enter your Bearer token (JWT)",
+        jwtAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "Authorization",
+          description: "Enter your JWT token (without 'Bearer' prefix)",
+        },
+        partnerAuth: {
+          type: "apiKey",
+          in: "header",
+          name: "PartnerId",
+          description: "Enter your Partner ID",
         },
       },
     },

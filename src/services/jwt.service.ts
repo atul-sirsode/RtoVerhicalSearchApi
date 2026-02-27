@@ -26,8 +26,6 @@ export class JwtService {
   generateToken(
     userJwtSecret?: string | null,
     userPartnerId?: string | null,
-    userId?: number,
-    email?: string,
   ): JwtTokenResponse {
     const currentTimestamp = Date.now();
     const randomNumber = Math.floor(Math.random() * 9999999) + 1;
@@ -42,17 +40,8 @@ export class JwtService {
       reqid: randomNumber,
     };
 
-    // Add optional properties if provided
-    if (userId !== undefined) {
-      payload.userId = userId;
-    }
-    if (email !== undefined) {
-      payload.email = email;
-    }
-
     const token = jwt.sign(payload, secretKey, {
       algorithm: "HS256",
-      expiresIn: "24h", // Token expires in 24 hours
     });
 
     return {
@@ -138,14 +127,8 @@ export class JwtService {
       reqid: randomNumber,
     };
 
-    // Add optional properties if provided
-    if (userId !== undefined) {
-      payload.userId = userId;
-    }
-
     const token = jwt.sign(payload, secretKey, {
       algorithm: "HS256",
-      expiresIn: "7d", // Refresh token expires in 7 days
     });
 
     return {
@@ -175,7 +158,6 @@ export class JwtService {
 
     const token = jwt.sign(payload, secretKey, {
       algorithm: "HS256",
-      expiresIn: "1h", // API token expires in 1 hour
     });
 
     return {

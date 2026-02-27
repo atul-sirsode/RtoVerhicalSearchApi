@@ -52,7 +52,8 @@ import type {
  *     summary: Get vehicle RC details by registration number (v1 - no caching)
  *     tags: [RC Verification]
  *     security:
- *       - bearerAuth: []
+ *       - jwtAuth: []
+ *       - partnerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -87,7 +88,8 @@ import type {
  *     summary: Get vehicle RC details by registration number (v1 - no caching)
  *     tags: [RC Verification]
  *     security:
- *       - bearerAuth: []
+ *       - jwtAuth: []
+ *       - partnerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -122,7 +124,8 @@ import type {
  *     summary: Get vehicle RC details by registration number (v2 - with caching)
  *     tags: [RC Verification]
  *     security:
- *       - bearerAuth: []
+ *       - jwtAuth: []
+ *       - partnerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -158,26 +161,39 @@ export async function fetchRC(
 ) {
   try {
     console.log("requestBody", req.body);
+    const token = req.headers.token;
+    const partnerId = req.headers.partnerid;
     const authHeader = req.headers.authorization;
-    const userAgentV1 = req.headers.useragent;
-    if (!authHeader) {
+    if (!authHeader || !token) {
       const errorResponse: ApiErrorResponse = {
         status: false,
-        message: "Missing Authorization header",
+        message: "Missing Authorization header (JWT token)",
         statuscode: 401,
       };
       return res.status(401).json(errorResponse);
     }
 
+    if (!partnerId) {
+      const errorResponse: ApiErrorResponse = {
+        status: false,
+        message: "Missing PartnerId header",
+        statuscode: 401,
+      };
+      return res.status(401).json(errorResponse);
+    }
+    const Token = token ?? authHeader;
     const requestHeaders: Record<string, string> = {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
       Accept: "application/json",
-      Token: authHeader,
+      Token: Token as string,
+      PartnerId: (Array.isArray(partnerId)
+        ? partnerId[0]
+        : partnerId) as string,
     };
 
-    if (userAgentV1) {
+    if (partnerId) {
       requestHeaders["User-Agent"] = (
-        Array.isArray(userAgentV1) ? userAgentV1[0] : userAgentV1
+        Array.isArray(partnerId) ? partnerId[0] : partnerId
       ) as string;
     }
 
@@ -212,13 +228,26 @@ export async function fetchRCV2(
 ) {
   try {
     console.log("requestBody", req.body);
+    const token = req.headers.token;
     const authHeader = req.headers.authorization;
-    const userAgentV2 = req.headers.useragent;
-    console.log("userAgentV2", userAgentV2);
-    if (!authHeader) {
+    const partnerId = req.headers.partnerid;
+
+    console.log("partnerId", partnerId);
+    console.log("token", token);
+    console.log("authHeader", authHeader);
+    if (!authHeader && !token) {
       const errorResponse: ApiErrorResponse = {
         status: false,
-        message: "Missing Authorization header",
+        message: "Missing Authorization header (JWT token)",
+        statuscode: 401,
+      };
+      return res.status(401).json(errorResponse);
+    }
+
+    if (!partnerId) {
+      const errorResponse: ApiErrorResponse = {
+        status: false,
+        message: "Missing PartnerId header",
         statuscode: 401,
       };
       return res.status(401).json(errorResponse);
@@ -237,16 +266,19 @@ export async function fetchRCV2(
     }
 
     console.log("Cache miss, calling API for RC number:", rcNumber);
-
+    const Token = token ?? authHeader;
     const requestHeaders: Record<string, string> = {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
       Accept: "application/json",
-      Token: authHeader,
+      Token: Token as string,
+      PartnerId: (Array.isArray(partnerId)
+        ? partnerId[0]
+        : partnerId) as string,
     };
 
-    if (userAgentV2) {
+    if (partnerId) {
       requestHeaders["User-Agent"] = (
-        Array.isArray(userAgentV2) ? userAgentV2[0] : userAgentV2
+        Array.isArray(partnerId) ? partnerId[0] : partnerId
       ) as string;
     }
 

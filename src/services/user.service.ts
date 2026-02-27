@@ -218,10 +218,8 @@ export class UserService {
         const tokenResponse = jwtService.generateToken(
           user.jwt_secret,
           user.partner_id,
-          user.user_id,
-          user.email,
         );
-
+        console.table(tokenResponse);
         // Add token to response
         loginResponse.token = tokenResponse.token;
 
