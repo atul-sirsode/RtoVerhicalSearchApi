@@ -12,6 +12,7 @@ export interface TollGuruRequest {
   to: TollGuruLocation;
   vehicle: TollGuruVehicle;
   country: string;
+  departureTime?: string;
 }
 
 // TollGuru API Response Interfaces

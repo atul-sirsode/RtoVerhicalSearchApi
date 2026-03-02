@@ -42,6 +42,11 @@ export class TollAnalysisService {
         country: request.country,
       };
 
+      // Only add departureTime if it exists
+      if (request.departureTime !== undefined) {
+        basicRequest.departureTime = request.departureTime;
+      }
+
       const tollGuruResponse =
         await this.tollGuruService.getTollInfo(basicRequest);
 
