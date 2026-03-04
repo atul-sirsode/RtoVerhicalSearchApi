@@ -1,5 +1,6 @@
 import { Router } from "express";
 import UserSubscriptionController from "../controllers/user-subscription.controller.js";
+import { guestRestrictionMiddleware } from "../middleware/guest-restriction.middleware.js";
 
 const router = Router();
 const userSubscriptionController = new UserSubscriptionController();
@@ -171,6 +172,7 @@ router.get(
  */
 router.post(
   "/",
+  guestRestrictionMiddleware,
   userSubscriptionController.createUserSubscription.bind(
     userSubscriptionController,
   ),
@@ -260,6 +262,7 @@ router.get(
  */
 router.put(
   "/:username",
+  guestRestrictionMiddleware,
   userSubscriptionController.updateUserSubscription.bind(
     userSubscriptionController,
   ),
@@ -305,6 +308,7 @@ router.put(
  */
 router.delete(
   "/:username",
+  guestRestrictionMiddleware,
   userSubscriptionController.deleteUserSubscription.bind(
     userSubscriptionController,
   ),

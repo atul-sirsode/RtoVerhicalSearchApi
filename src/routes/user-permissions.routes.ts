@@ -6,6 +6,7 @@ import {
   updateUserPermission,
   deleteUserPermission,
 } from "../controllers/user.controller.js";
+import { guestRestrictionMiddleware } from "../middleware/guest-restriction.middleware.js";
 
 const router = Router();
 
@@ -13,19 +14,19 @@ const router = Router();
  * User Permissions Management Routes
  */
 
-// Get all user permissions
+// Get all user permissions (no restriction - GET allowed for all)
 router.get("/", getAllUserPermissions);
 
-// Get user permissions by user_id
+// Get user permissions by user_id (no restriction - GET allowed for all)
 router.get("/:user_id", getUserPermissionsByUserId);
 
-// Create user permission
-router.post("/create", createUserPermission);
+// Create user permission (restricted - guests cannot create)
+router.post("/create", guestRestrictionMiddleware, createUserPermission);
 
-// Update user permission
-router.put("/update", updateUserPermission);
+// Update user permission (restricted - guests cannot update)
+router.put("/update", guestRestrictionMiddleware, updateUserPermission);
 
-// Delete user permission
-router.delete("/delete", deleteUserPermission);
+// Delete user permission (restricted - guests cannot delete)
+router.delete("/delete", guestRestrictionMiddleware, deleteUserPermission);
 
 export default router;

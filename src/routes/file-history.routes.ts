@@ -8,6 +8,7 @@ import {
   searchFilesByName,
   getFileHistoryStats,
 } from "../controllers/file-history.controller.js";
+import { guestRestrictionMiddleware } from "../middleware/guest-restriction.middleware.js";
 
 const router = Router();
 
@@ -45,8 +46,13 @@ const upload = multer({
 // GET /api/file-history - Get file history with pagination
 router.get("/", getFileHistory);
 
-// POST /api/file-history - Save file to history
-router.post("/", upload.single("file"), saveFileToHistory);
+// POST /api/file-history - Save file to history (restricted for guests)
+router.post(
+  "/",
+  guestRestrictionMiddleware,
+  upload.single("file"),
+  saveFileToHistory,
+);
 
 // GET /api/file-history/search - Search files by name
 router.get("/search", searchFilesByName);
@@ -57,7 +63,7 @@ router.get("/stats", getFileHistoryStats);
 // GET /api/file-history/:id - Get file blob by ID
 router.get("/:id", getFileBlob);
 
-// DELETE /api/file-history/:id - Delete file from history
-router.delete("/:id", deleteFileFromHistory);
+// DELETE /api/file-history/:id - Delete file from history (restricted for guests)
+router.delete("/:id", guestRestrictionMiddleware, deleteFileFromHistory);
 
 export default router;

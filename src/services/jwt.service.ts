@@ -26,6 +26,7 @@ export class JwtService {
   generateToken(
     userJwtSecret?: string | null,
     userPartnerId?: string | null,
+    userId?: number,
   ): JwtTokenResponse {
     const currentTimestamp = Date.now();
     const randomNumber = Math.floor(Math.random() * 9999999) + 1;
@@ -38,6 +39,7 @@ export class JwtService {
       timestamp: currentTimestamp,
       partnerId: partnerId || DEFAULT_PARTNER_ID,
       reqid: randomNumber,
+      ...(userId && { userId }), // Only include userId if it's defined
     };
 
     const token = jwt.sign(payload, secretKey, {

@@ -18,8 +18,13 @@ import userRolesRoutes from "./routes/user-roles.routes.js";
 import userSecurityFlagsRoutes from "./routes/user-security-flags.routes.js";
 import fastTagRoutes from "./routes/fasttag.routes.js";
 import userSubscriptionRoutes from "./routes/user-subscription.routes.js";
+import debugRoutes from "./routes/debug.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { swaggerAuthMiddleware } from "./middleware/swagger-auth.middleware.js";
+import {
+  swaggerGuestFilterMiddleware,
+  filterSwaggerSpecForGuest,
+} from "./middleware/swagger-guest-filter.middleware.js";
 import { swaggerSpec, swaggerUi } from "./config/swagger.js";
 
 export const app = express();
@@ -55,11 +60,14 @@ app.use("/api/user-security-flags", userSecurityFlagsRoutes);
 app.use("/api/fasttag", fastTagRoutes);
 app.use("/api/user-subscriptions", userSubscriptionRoutes);
 
+// Debug routes for testing
+app.use("/api/debug", debugRoutes);
+
 // Versioned routes
 app.use("/api/v1/rc", rcV1Routes);
 app.use("/api/v2/rc", rcV2Routes);
-// Serve the raw OpenAPI JSON
-app.get("/swagger.json", (_req, res) => {
+// Serve the raw OpenAPI JSON with guest filtering
+app.get("/swagger.json", swaggerGuestFilterMiddleware, (_req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.status(200).send(swaggerSpec);
 });
@@ -90,31 +98,104 @@ app.use(
   }),
 );
 
-// Swagger documentation (protected)
-app.use(
-  "/api-docs",
-  swaggerAuthMiddleware,
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    explorer: true,
-    swaggerOptions: {
-      url: "/swagger.json",
-      persistAuthorization: true,
-      displayRequestDuration: true,
-      filter: true,
-      showExtensions: true,
-      showCommonExtensions: true,
-      docExpansion: "none",
-      defaultModelsExpandDepth: 2,
-      defaultModelExpandDepth: 2,
-    },
-    customCss: `
-      .swagger-ui .topbar { display: none }
-      .swagger-ui .info { margin: 20px 0 }
-      .swagger-ui .scheme-container { margin: 20px 0 }
-    `,
-    customSiteTitle: "RTO Vehicle API Documentation - Protected",
-  }),
-);
+// Swagger documentation (protected) - with dynamic spec generation
+app.get("/api-docs", swaggerAuthMiddleware, async (req, res, next) => {
+  try {
+    const { JwtService } = await import("./services/jwt.service.js");
+    const { UserService } = await import("./services/user.service.js");
+
+    // Check for Authorization header or cookie
+    const authHeader = req.headers.authorization;
+    const cookieHeader = req.headers.cookie;
+    let token = null;
+
+    // Try to get token from Authorization header first
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7);
+    }
+    // If not in header, try to get from cookie
+    else if (cookieHeader) {
+      const cookies = cookieHeader.split(";").reduce(
+        (acc, cookie) => {
+          const [key, value] = cookie.trim().split("=");
+          if (key && value) {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
+
+      token = cookies["swagger_token"];
+    }
+
+    let isGuest = false;
+
+    if (token) {
+      try {
+        const jwtService = new JwtService();
+        const decodedToken = jwtService.verifyToken(token);
+
+        if (decodedToken && decodedToken.userId) {
+          const userService = new UserService();
+          const securityResult = await userService.getUserSecurityFlagByUserId(
+            decodedToken.userId,
+          );
+
+          if (securityResult.status && securityResult.data) {
+            const userSecurity = Array.isArray(securityResult.data)
+              ? securityResult.data[0]
+              : securityResult.data;
+
+            if (userSecurity.is_guest === 1) {
+              isGuest = true;
+              console.log(
+                `🔒 Guest user detected: userId=${decodedToken.userId}, filtering Swagger documentation`,
+              );
+            } else {
+              console.log(
+                `✅ Regular user detected: userId=${decodedToken.userId}, showing full Swagger documentation`,
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error checking guest status:", error);
+      }
+    }
+
+    // Generate the appropriate spec
+    const spec = isGuest ? filterSwaggerSpecForGuest(swaggerSpec) : swaggerSpec;
+
+    // Serve Swagger UI with the filtered/full spec
+    const swaggerUiHandler = swaggerUi.setup(spec, {
+      explorer: true,
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        showExtensions: true,
+        showCommonExtensions: true,
+        docExpansion: "none",
+        defaultModelsExpandDepth: 2,
+        defaultModelExpandDepth: 2,
+      },
+      customCss: `
+        .swagger-ui .topbar { display: none }
+        .swagger-ui .info { margin: 20px 0 }
+        .swagger-ui .scheme-container { margin: 20px 0 }
+      `,
+      customSiteTitle: "RTO Vehicle API Documentation - Protected",
+    });
+
+    swaggerUiHandler(req, res, next);
+  } catch (error) {
+    console.error("Error in Swagger docs handler:", error);
+    next(error);
+  }
+});
+
+// Serve Swagger UI assets
+app.use("/api-docs", swaggerUi.serve);
 
 app.use(errorMiddleware);

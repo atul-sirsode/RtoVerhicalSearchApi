@@ -1,8 +1,10 @@
-﻿import { Router } from "express"
-import { login, VerifyLogin } from "../controllers/auth.controller.js"
+﻿import { Router } from "express";
+import { login, VerifyLogin } from "../controllers/auth.controller.js";
+import { guestRestrictionMiddleware } from "../middleware/guest-restriction.middleware.js";
 
-const router = Router()
+const router = Router();
 
-router.post("/login_otp", login)
-router.post("/login_verify_otp", VerifyLogin)
-export default router
+// Auth endpoints (restricted for guests)
+router.post("/login_otp", guestRestrictionMiddleware, login);
+router.post("/login_verify_otp", guestRestrictionMiddleware, VerifyLogin);
+export default router;

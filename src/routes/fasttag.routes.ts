@@ -1,5 +1,6 @@
 import { Router } from "express";
 import FastTagController from "../controllers/fasttag.controller.js";
+import { guestRestrictionMiddleware } from "../middleware/guest-restriction.middleware.js";
 
 const router = Router();
 const fastTagController = new FastTagController();
@@ -257,7 +258,11 @@ router.get("/", fastTagController.getFastTags.bind(fastTagController));
  *       409:
  *         description: Conflict - Vehicle number already exists
  */
-router.post("/", fastTagController.createFastTag.bind(fastTagController));
+router.post(
+  "/",
+  guestRestrictionMiddleware,
+  fastTagController.createFastTag.bind(fastTagController),
+);
 
 /**
  * @swagger
@@ -342,6 +347,7 @@ router.get(
  */
 router.put(
   "/:vehicleNumber",
+  guestRestrictionMiddleware,
   fastTagController.updateFastTag.bind(fastTagController),
 );
 
@@ -386,6 +392,7 @@ router.put(
  */
 router.delete(
   "/:vehicleNumber",
+  guestRestrictionMiddleware,
   fastTagController.deleteFastTag.bind(fastTagController),
 );
 
@@ -434,6 +441,7 @@ router.delete(
  */
 router.post(
   "/:id/transactions",
+  guestRestrictionMiddleware,
   fastTagController.addTransaction.bind(fastTagController),
 );
 
@@ -486,6 +494,7 @@ router.post(
  */
 router.put(
   "/:id/transactions/:txnId",
+  guestRestrictionMiddleware,
   fastTagController.updateTransaction.bind(fastTagController),
 );
 
@@ -527,6 +536,7 @@ router.put(
  */
 router.delete(
   "/:id/transactions/:txnId",
+  guestRestrictionMiddleware,
   fastTagController.deleteTransaction.bind(fastTagController),
 );
 
