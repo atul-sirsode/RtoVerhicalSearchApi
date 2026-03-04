@@ -97,6 +97,7 @@ export interface GetUserInfoResponse {
   partner_id: string | null;
   created_at: Date;
   updated_at: Date;
+  is_guest: number;
 }
 
 export interface GetUserPermissionsRequest {
@@ -251,7 +252,8 @@ export interface DeleteRoleResponse {
 
 // Bank entity
 export interface Bank {
-  id: string;
+  bank_id: number;
+  code: string;
   name: string;
   enabled: number; // TINYINT(1) - 0 or 1
   created_at: Date;
@@ -260,23 +262,24 @@ export interface Bank {
 
 // Bank CRUD Request/Response types
 export interface CreateBankRequest {
-  id: string;
+  code: string;
   name: string;
   enabled?: number; // Optional, defaults to 1
 }
 
 export interface UpdateBankRequest {
-  id: string;
+  bank_id: number;
+  code?: string;
   name?: string;
   enabled?: number;
 }
 
 export interface DeleteBankRequest {
-  id: string;
+  bank_id: number;
 }
 
 export interface BankResponse extends UserApiResponse {
-  data?: Bank | { id: string; affectedRows: number };
+  data?: Bank | { bank_id: number; affectedRows: number };
 }
 
 export interface BanksResponse extends UserApiResponse {
@@ -401,6 +404,7 @@ export interface UserSecurityFlag {
   bypass_otp: number; // TINYINT(1) - 0 or 1
   mfa_enrolled: number; // TINYINT(1) - 0 or 1
   updated_at: Date;
+  is_guest: number;
 }
 
 // User Security Flag CRUD Request/Response types
@@ -409,6 +413,7 @@ export interface CreateUserSecurityFlagRequest {
   is_admin: number;
   bypass_otp: number;
   mfa_enrolled: number;
+  is_guest: number;
 }
 
 export interface UpdateUserSecurityFlagRequest {
@@ -416,6 +421,7 @@ export interface UpdateUserSecurityFlagRequest {
   is_admin?: number;
   bypass_otp?: number;
   mfa_enrolled?: number;
+  is_guest?: number;
 }
 
 export interface DeleteUserSecurityFlagRequest {

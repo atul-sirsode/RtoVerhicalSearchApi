@@ -236,6 +236,128 @@ import type {
  *           type: integer
  *           description: HTTP status code
  *           example: 200
+ *     Bank:
+ *       type: object
+ *       properties:
+ *         bank_id:
+ *           type: integer
+ *           description: Bank ID
+ *           example: 1
+ *         code:
+ *           type: string
+ *           description: Bank code
+ *           example: "HDFC"
+ *         name:
+ *           type: string
+ *           description: Bank name
+ *           example: "HDFC Bank"
+ *         enabled:
+ *           type: integer
+ *           description: Bank status (1 = enabled, 0 = disabled)
+ *           example: 1
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Bank creation timestamp
+ *           example: "2024-01-01T10:00:00Z"
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *           example: "2024-01-01T10:00:00Z"
+ *     CreateBankRequest:
+ *       type: object
+ *       required:
+ *         - code
+ *         - name
+ *       properties:
+ *         code:
+ *           type: string
+ *           description: Bank code (must be unique)
+ *           example: "ICICI"
+ *         name:
+ *           type: string
+ *           description: Bank name
+ *           example: "ICICI Bank"
+ *         enabled:
+ *           type: integer
+ *           description: Bank status (1 = enabled, 0 = disabled)
+ *           example: 1
+ *     UpdateBankRequest:
+ *       type: object
+ *       required:
+ *         - bank_id
+ *       properties:
+ *         bank_id:
+ *           type: integer
+ *           description: Bank ID to update
+ *           example: 1
+ *         code:
+ *           type: string
+ *           description: Bank code (must be unique)
+ *           example: "ICICI"
+ *         name:
+ *           type: string
+ *           description: Bank name
+ *           example: "ICICI Bank"
+ *         enabled:
+ *           type: integer
+ *           description: Bank status (1 = enabled, 0 = disabled)
+ *           example: 1
+ *     DeleteBankRequest:
+ *       type: object
+ *       required:
+ *         - bank_id
+ *       properties:
+ *         bank_id:
+ *           type: integer
+ *           description: Bank ID to delete
+ *           example: 1
+ *     BankResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: boolean
+ *           description: Request status
+ *           example: true
+ *         message:
+ *           type: string
+ *           description: Response message
+ *           example: "Bank created successfully"
+ *         data:
+ *           oneOf:
+ *             - $ref: '#/components/schemas/Bank'
+ *             - type: object
+ *               properties:
+ *                 bank_id:
+ *                   type: integer
+ *                   example: 1
+ *                 affectedRows:
+ *                   type: integer
+ *                   example: 1
+ *         statuscode:
+ *           type: integer
+ *           description: HTTP status code
+ *           example: 201
+ *     BanksResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: boolean
+ *           description: Request status
+ *           example: true
+ *         message:
+ *           type: string
+ *           description: Response message
+ *           example: "Banks retrieved successfully"
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Bank'
+ *         statuscode:
+ *           type: integer
+ *           description: HTTP status code
+ *           example: 200
  */
 
 /**
@@ -1492,59 +1614,78 @@ export async function deleteRole(
  *     Bank:
  *       type: object
  *       properties:
- *         id:
+ *         bank_id:
+ *           type: integer
+ *           description: Bank ID (auto-incrementing primary key)
+ *           example: 1
+ *           readOnly: true
+ *         code:
  *           type: string
- *           description: Bank ID
+ *           description: Bank code (unique identifier)
  *           example: "HDFC"
+ *           maxLength: 64
  *         name:
  *           type: string
- *           description: Bank name
+ *           description: Bank name (unique)
  *           example: "HDFC Bank"
+ *           maxLength: 255
  *         enabled:
  *           type: integer
  *           description: Bank enabled status (1 = enabled, 0 = disabled)
  *           example: 1
+ *           default: 1
  *         created_at:
  *           type: string
  *           format: date-time
  *           description: Creation timestamp
  *           example: "2026-02-26T12:49:35Z"
+ *           readOnly: true
  *         updated_at:
  *           type: string
  *           format: date-time
  *           description: Last update timestamp
  *           example: "2026-02-26T12:49:35Z"
+ *           readOnly: true
  *     CreateBankRequest:
  *       type: object
  *       required:
- *         - id
+ *         - code
  *         - name
  *       properties:
- *         id:
+ *         code:
  *           type: string
- *           description: Bank ID
+ *           description: Bank code (unique identifier)
  *           example: "HDFC"
+ *           maxLength: 64
  *         name:
  *           type: string
- *           description: Bank name
+ *           description: Bank name (unique)
  *           example: "HDFC Bank"
+ *           maxLength: 255
  *         enabled:
  *           type: integer
  *           description: Bank enabled status (1 = enabled, 0 = disabled)
  *           example: 1
+ *           default: 1
  *     UpdateBankRequest:
  *       type: object
  *       required:
- *         - id
+ *         - bank_id
  *       properties:
- *         id:
+ *         bank_id:
+ *           type: integer
+ *           description: Bank ID (primary key)
+ *           example: 1
+ *         code:
  *           type: string
- *           description: Bank ID
+ *           description: Bank code (unique identifier)
  *           example: "HDFC"
+ *           maxLength: 64
  *         name:
  *           type: string
- *           description: Bank name
+ *           description: Bank name (unique)
  *           example: "HDFC Bank"
+ *           maxLength: 255
  *         enabled:
  *           type: integer
  *           description: Bank enabled status (1 = enabled, 0 = disabled)
@@ -1552,12 +1693,12 @@ export async function deleteRole(
  *     DeleteBankRequest:
  *       type: object
  *       required:
- *         - id
+ *         - bank_id
  *       properties:
- *         id:
- *           type: string
- *           description: Bank ID
- *           example: "HDFC"
+ *         bank_id:
+ *           type: integer
+ *           description: Bank ID (primary key)
+ *           example: 1
  */
 
 // ==================== BANK CONTROLLERS ====================

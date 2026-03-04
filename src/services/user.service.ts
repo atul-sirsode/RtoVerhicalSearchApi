@@ -162,6 +162,7 @@ export class UserService {
             COALESCE(is_admin, 0) AS is_admin,
             COALESCE(bypass_otp, 0) AS bypass_otp,
             COALESCE(mfa_enrolled, 0) AS mfa_enrolled,
+            COALESCE(is_guest, 0) AS is_guest,
             updated_at
           FROM ${USER_SECURITY_FLAGS_TABLE}
           WHERE user_id = ?
@@ -180,6 +181,7 @@ export class UserService {
                 is_admin: securityData[0].is_admin || 0,
                 bypass_otp: securityData[0].bypass_otp || 0,
                 mfa_enrolled: securityData[0].mfa_enrolled || 0,
+                is_guest: securityData[0].is_guest || 0,
                 updated_at: securityData[0].updated_at,
               }
             : {
@@ -187,6 +189,7 @@ export class UserService {
                 is_admin: 0,
                 bypass_otp: 0,
                 mfa_enrolled: 0,
+                is_guest: 0,
                 updated_at: new Date(),
               };
 
@@ -303,6 +306,7 @@ export class UserService {
             COALESCE(is_admin, 0) AS is_admin,
             COALESCE(bypass_otp, 0) AS bypass_otp,
             COALESCE(mfa_enrolled, 0) AS mfa_enrolled,
+            COALESCE(is_guest, 0) AS is_guest,
             updated_at
           FROM ${USER_SECURITY_FLAGS_TABLE}
           WHERE user_id = ?
@@ -321,6 +325,7 @@ export class UserService {
                 is_admin: securityData[0].is_admin || 0,
                 bypass_otp: securityData[0].bypass_otp || 0,
                 mfa_enrolled: securityData[0].mfa_enrolled || 0,
+                is_guest: securityData[0].is_guest || 0,
                 updated_at: securityData[0].updated_at,
               }
             : {
@@ -328,6 +333,7 @@ export class UserService {
                 is_admin: 0,
                 bypass_otp: 0,
                 mfa_enrolled: 0,
+                is_guest: 0,
                 updated_at: new Date(),
               };
 
@@ -341,6 +347,7 @@ export class UserService {
           is_active: user.is_active,
           is_admin: securityFlags.is_admin,
           bypass_otp: securityFlags.bypass_otp,
+          is_guest: securityFlags.is_guest,
           jwt_secret: user.jwt_secret,
           partner_id: user.partner_id,
           created_at: user.created_at,
@@ -1384,17 +1391,17 @@ export class UserService {
     }
 
     try {
-      // Check if bank ID already exists
+      // Check if bank code already exists
       const [existingBank] = await connection.execute(
-        `SELECT id FROM ${BANKS_TABLE} WHERE id = ?`,
-        [request.id],
+        `SELECT bank_id FROM ${BANKS_TABLE} WHERE code = ?`,
+        [request.code],
       );
 
       if ((existingBank as any[]).length > 0) {
         await connection.end();
         return {
           status: false,
-          message: "Bank ID already exists",
+          message: "Bank code already exists",
           statuscode: 400,
         };
       }
@@ -1416,8 +1423,8 @@ export class UserService {
 
       // Create bank
       const [result] = await connection.execute(
-        `INSERT INTO ${BANKS_TABLE} (id, name, enabled) VALUES (?, ?, ?)`,
-        [request.id, request.name, request.enabled ?? 1],
+        `INSERT INTO ${BANKS_TABLE} (code, name, enabled) VALUES (?, ?, ?)`,
+        [request.code, request.name, request.enabled ?? 1],
       );
 
       await connection.end();
@@ -1426,7 +1433,8 @@ export class UserService {
         status: true,
         message: "Bank created successfully",
         data: {
-          id: request.id,
+          bank_id: (result as any).insertId,
+          code: request.code,
           name: request.name,
           enabled: request.enabled ?? 1,
           created_at: new Date(),
@@ -1460,8 +1468,8 @@ export class UserService {
     try {
       // Check if bank exists
       const [existingBank] = await connection.execute(
-        `SELECT * FROM ${BANKS_TABLE} WHERE id = ?`,
-        [request.id],
+        `SELECT * FROM ${BANKS_TABLE} WHERE bank_id = ?`,
+        [request.bank_id],
       );
 
       if ((existingBank as any[]).length === 0) {
@@ -1481,7 +1489,10 @@ export class UserService {
         updateFields.push("name = ?");
         updateValues.push(request.name);
       }
-
+      if (request.code !== undefined) {
+        updateFields.push("code=?");
+        updateValues.push(request.code);
+      }
       if (request.enabled !== undefined) {
         updateFields.push("enabled = ?");
         updateValues.push(request.enabled);
@@ -1497,10 +1508,10 @@ export class UserService {
       }
 
       updateFields.push("updated_at = CURRENT_TIMESTAMP");
-      updateValues.push(request.id);
+      updateValues.push(request.bank_id);
 
       const [result] = await connection.execute(
-        `UPDATE ${BANKS_TABLE} SET ${updateFields.join(", ")} WHERE id = ?`,
+        `UPDATE ${BANKS_TABLE} SET ${updateFields.join(", ")} WHERE bank_id = ?`,
         updateValues,
       );
 
@@ -1510,7 +1521,8 @@ export class UserService {
         status: true,
         message: "Bank updated successfully",
         data: {
-          id: request.id,
+          bank_id: request.bank_id,
+          code: request.code ?? "",
           name: request.name ?? "",
           enabled: request.enabled ?? 1,
           created_at: new Date(),
@@ -1544,8 +1556,8 @@ export class UserService {
     try {
       // Check if bank exists
       const [existingBank] = await connection.execute(
-        `SELECT * FROM ${BANKS_TABLE} WHERE id = ?`,
-        [request.id],
+        `SELECT * FROM ${BANKS_TABLE} WHERE bank_id = ?`,
+        [request.bank_id],
       );
 
       if ((existingBank as any[]).length === 0) {
@@ -1559,8 +1571,8 @@ export class UserService {
 
       // Delete bank
       const [result] = await connection.execute(
-        `DELETE FROM ${BANKS_TABLE} WHERE id = ?`,
-        [request.id],
+        `DELETE FROM ${BANKS_TABLE} WHERE bank_id = ?`,
+        [request.bank_id],
       );
 
       await connection.end();
@@ -1568,7 +1580,10 @@ export class UserService {
       return {
         status: true,
         message: "Bank deleted successfully",
-        data: { id: request.id, affectedRows: (result as any).affectedRows },
+        data: {
+          bank_id: request.bank_id,
+          affectedRows: (result as any).affectedRows,
+        },
       };
     } catch (error) {
       await connection.end();
@@ -2564,12 +2579,13 @@ export class UserService {
 
       // Create user security flag
       const [result] = await connection.execute(
-        `INSERT INTO ${USER_SECURITY_FLAGS_TABLE} (user_id, is_admin, bypass_otp, mfa_enrolled, updated_at) 
-         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        `INSERT INTO ${USER_SECURITY_FLAGS_TABLE} (user_id, is_admin, bypass_otp,is_guest, mfa_enrolled, updated_at) 
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         [
           request.user_id,
           request.is_admin,
           request.bypass_otp,
+          request.is_guest,
           request.mfa_enrolled,
         ],
       );
@@ -2583,6 +2599,7 @@ export class UserService {
           user_id: request.user_id,
           is_admin: request.is_admin,
           bypass_otp: request.bypass_otp,
+          is_guest: request.is_guest,
           mfa_enrolled: request.mfa_enrolled,
           updated_at: new Date(),
         },
@@ -2674,6 +2691,7 @@ export class UserService {
           user_id: request.user_id,
           is_admin: request.is_admin ?? 0,
           bypass_otp: request.bypass_otp ?? 0,
+          is_guest: request.is_guest ?? 0,
           mfa_enrolled: request.mfa_enrolled ?? 0,
           updated_at: new Date(),
         },

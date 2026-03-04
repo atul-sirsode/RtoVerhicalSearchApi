@@ -21,17 +21,28 @@ export class FastTagService {
     query: FastTagQueryParams = {},
   ): Promise<FastTagApiResponse<FastTagListResponse>> {
     try {
-      const { page = 1, limit = 10, search, vehicleNumber, formType } = query;
+      const {
+        page = 1,
+        limit = 10,
+        search,
+        vehicleNumber,
+        formType,
+        bank,
+      } = query;
 
       // Build filter conditions
       const filter: any = {};
 
+      // Handle bank → formType mapping (bank is the UX parameter name)
+      const actualFormType = bank || formType;
+
       if (vehicleNumber) {
-        filter.vehicleNumber = new RegExp(vehicleNumber, "i");
+        // For exact matching (UX requirement), use exact match instead of regex
+        filter.vehicleNumber = vehicleNumber.toUpperCase();
       }
 
-      if (formType) {
-        filter.formType = formType;
+      if (actualFormType) {
+        filter.formType = actualFormType.toLowerCase();
       }
 
       let queryBuilder = FastTagModel.find(filter);

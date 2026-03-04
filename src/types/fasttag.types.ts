@@ -96,4 +96,7 @@ export interface FastTagQueryParams {
   search?: string;
   vehicleNumber?: string;
   formType?: string;
+  bank?: string; // UX parameter name that maps to formType
+  startDate?: string;
+  endDate?: string;
 }
