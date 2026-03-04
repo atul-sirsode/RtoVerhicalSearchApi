@@ -16,6 +16,8 @@ import userPermissionsRoutes from "./routes/user-permissions.routes.js";
 import rolePermissionsRoutes from "./routes/role-permissions.routes.js";
 import userRolesRoutes from "./routes/user-roles.routes.js";
 import userSecurityFlagsRoutes from "./routes/user-security-flags.routes.js";
+import fastTagRoutes from "./routes/fasttag.routes.js";
+import userSubscriptionRoutes from "./routes/user-subscription.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { swaggerAuthMiddleware } from "./middleware/swagger-auth.middleware.js";
 import { swaggerSpec, swaggerUi } from "./config/swagger.js";
@@ -28,6 +30,7 @@ app.use(
       "https://rtovehicalsearch.transcologistic.in",
       "http://localhost:3000",
       "http://localhost:5173",
+      "http://localhost:5174",
     ],
     credentials: true,
   }),
@@ -49,6 +52,8 @@ app.use("/api/user-permissions", userPermissionsRoutes);
 app.use("/api/role-permissions", rolePermissionsRoutes);
 app.use("/api/user-roles", userRolesRoutes);
 app.use("/api/user-security-flags", userSecurityFlagsRoutes);
+app.use("/api/fasttag", fastTagRoutes);
+app.use("/api/user-subscriptions", userSubscriptionRoutes);
 
 // Versioned routes
 app.use("/api/v1/rc", rcV1Routes);
@@ -58,6 +63,33 @@ app.get("/swagger.json", (_req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.status(200).send(swaggerSpec);
 });
+
+// Unprotected Swagger documentation for testing
+app.use(
+  "/api-docs-test",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    swaggerOptions: {
+      url: "/swagger.json",
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      showExtensions: true,
+      showCommonExtensions: true,
+      docExpansion: "none",
+      defaultModelsExpandDepth: 2,
+      defaultModelExpandDepth: 2,
+    },
+    customCss: `
+      .swagger-ui .topbar { display: none }
+      .swagger-ui .info { margin: 20px 0 }
+      .swagger-ui .scheme-container { margin: 20px 0 }
+    `,
+    customSiteTitle: "RTO Vehicle API Documentation - Testing",
+  }),
+);
+
 // Swagger documentation (protected)
 app.use(
   "/api-docs",

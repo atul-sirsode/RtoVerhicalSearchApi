@@ -2117,15 +2117,6 @@ export class UserService {
         [request.role_id, request.permission_id],
       );
 
-      if ((existing as any[]).length === 0) {
-        await connection.end();
-        return {
-          status: false,
-          message: "Role permission not found",
-          statuscode: 404,
-        };
-      }
-
       if (request.is_allowed === undefined) {
         await connection.end();
         return {
@@ -2135,24 +2126,45 @@ export class UserService {
         };
       }
 
-      // Update role permission
-      const [result] = await connection.execute(
-        `UPDATE ${ROLE_PERMISSIONS_TABLE} SET is_allowed = ? WHERE role_id = ? AND permission_id = ?`,
-        [request.is_allowed, request.role_id, request.permission_id],
-      );
+      if ((existing as any[]).length === 0) {
+        // Insert new role permission
+        const [result] = await connection.execute(
+          `INSERT INTO ${ROLE_PERMISSIONS_TABLE} (role_id, permission_id, is_allowed, created_at) VALUES (?, ?, ?, NOW())`,
+          [request.role_id, request.permission_id, request.is_allowed],
+        );
 
-      await connection.end();
+        await connection.end();
 
-      return {
-        status: true,
-        message: "Role permission updated successfully",
-        data: {
-          role_id: request.role_id,
-          permission_id: request.permission_id,
-          is_allowed: request.is_allowed,
-          created_at: new Date(),
-        },
-      };
+        return {
+          status: true,
+          message: "Role permission created successfully",
+          data: {
+            role_id: request.role_id,
+            permission_id: request.permission_id,
+            is_allowed: request.is_allowed,
+            created_at: new Date(),
+          },
+        };
+      } else {
+        // Update existing role permission
+        const [result] = await connection.execute(
+          `UPDATE ${ROLE_PERMISSIONS_TABLE} SET is_allowed = ?, updated_at = NOW() WHERE role_id = ? AND permission_id = ?`,
+          [request.is_allowed, request.role_id, request.permission_id],
+        );
+
+        await connection.end();
+
+        return {
+          status: true,
+          message: "Role permission updated successfully",
+          data: {
+            role_id: request.role_id,
+            permission_id: request.permission_id,
+            is_allowed: request.is_allowed,
+            created_at: new Date(),
+          },
+        };
+      }
     } catch (error) {
       await connection.end();
       console.error("Update role permission error:", error);

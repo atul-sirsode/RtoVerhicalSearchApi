@@ -2138,7 +2138,8 @@ export async function createRolePermission(
  * @swagger
  * /api/role-permissions/update:
  *   put:
- *     summary: Update an existing role permission
+ *     summary: Update or create a role permission (upsert)
+ *     description: Updates an existing role permission or creates a new one if it doesn't exist
  *     tags: [Role Permissions]
  *     requestBody:
  *       required: true
@@ -2153,8 +2154,14 @@ export async function createRolePermission(
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/RolePermissionResponse'
- *       404:
- *         description: Role permission not found
+ *       201:
+ *         description: Role permission created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RolePermissionResponse'
+ *       400:
+ *         description: Bad request - No fields to update
  *       500:
  *         description: Internal server error
  */
@@ -2166,7 +2173,10 @@ export async function updateRolePermission(
   try {
     const userService = new UserService();
     const result = await userService.updateRolePermission(req.body);
-    res.json(result);
+
+    // Return 201 for created, 200 for updated
+    const statusCode = result.message?.includes("created") ? 201 : 200;
+    res.status(statusCode).json(result);
   } catch (err) {
     console.error("Error in updateRolePermission controller:", err);
     next(err);

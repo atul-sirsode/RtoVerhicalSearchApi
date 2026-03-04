@@ -87,7 +87,7 @@ import type { TollCalculationOptions } from "../types/toll-analysis.types.js";
  *           type: string
  *           format: date-time
  *           description: ISO 8601 formatted departure time
- *           example: "2026-03-02T11:14:00.138251+05:30"
+ *           example: "2026-03-03T00:26:30.708Z"
  *         includeAnalysis:
  *           type: boolean
  *           description: Include detailed toll analysis in response
