@@ -99,7 +99,11 @@ app.use(
 );
 
 // Swagger documentation (protected) - with dynamic spec generation
-app.get("/api-docs", swaggerAuthMiddleware, async (req, res, next) => {
+// First, serve static assets (CSS, JS files)
+app.use("/api-docs", swaggerAuthMiddleware, swaggerUi.serve);
+
+// Then handle the main Swagger UI page with dynamic filtering
+app.get("/api-docs", async (req, res, next) => {
   try {
     const { JwtService } = await import("./services/jwt.service.js");
     const { UserService } = await import("./services/user.service.js");
@@ -194,8 +198,5 @@ app.get("/api-docs", swaggerAuthMiddleware, async (req, res, next) => {
     next(error);
   }
 });
-
-// Serve Swagger UI assets
-app.use("/api-docs", swaggerUi.serve);
 
 app.use(errorMiddleware);
