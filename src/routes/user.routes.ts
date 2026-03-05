@@ -9,7 +9,6 @@ import {
   updateUser,
   deleteUser,
 } from "../controllers/user.controller.js";
-import { guestRestrictionMiddleware } from "../middleware/guest-restriction.middleware.js";
 
 const router = Router();
 
@@ -17,20 +16,20 @@ const router = Router();
  * User Management Routes
  */
 
-// Existing routes (no restrictions - these are GET/POST for info retrieval)
+// Existing routes
 router.post("/login", login);
 router.post("/get-user-info", getUserInfo);
 router.post("/get-user-permissions", getUserPermissions);
 router.get("/get-all-active-users", getAllActiveUsers);
 
 // ==================== USER CRUD ROUTES ====================
-// Create user (restricted - guests cannot create users)
-router.post("/create", guestRestrictionMiddleware, createUser);
+// Create user
+router.post("/create", createUser);
 
-// Update user (restricted - guests cannot update users)
-router.put("/update", guestRestrictionMiddleware, updateUser);
+// Update user
+router.put("/update", updateUser);
 
-// Delete user (restricted - guests cannot delete users)
-router.delete("/delete", guestRestrictionMiddleware, deleteUser);
+// Delete user
+router.delete("/delete", deleteUser);
 
 export default router;

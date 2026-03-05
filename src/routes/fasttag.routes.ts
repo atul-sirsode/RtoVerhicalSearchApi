@@ -307,7 +307,7 @@ router.get(
 
 /**
  * @swagger
- * /api/fasttag/{vehicleNumber}:
+ * /api/fasttag/{id}:
  *   put:
  *     summary: Update a FastTag document
  *     tags: [FastTag]
@@ -340,13 +340,11 @@ router.get(
  *                   $ref: '#/components/schemas/FastTagDocument'
  *       404:
  *         description: FastTag not found
- *       409:
- *         description: Conflict - Vehicle number already exists
  *       500:
  *         description: Internal server error
  */
 router.put(
-  "/:vehicleNumber",
+  "/:id",
   guestRestrictionMiddleware,
   fastTagController.updateFastTag.bind(fastTagController),
 );
@@ -443,59 +441,6 @@ router.post(
   "/:id/transactions",
   guestRestrictionMiddleware,
   fastTagController.addTransaction.bind(fastTagController),
-);
-
-/**
- * @swagger
- * /api/fasttag/{id}/transactions/{txnId}:
- *   put:
- *     summary: Update a transaction in a FastTag document
- *     tags: [FastTag]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: FastTag document ID
- *       - in: path
- *         name: txnId
- *         required: true
- *         schema:
- *           type: string
- *         description: Transaction ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/AddTransactionRequest'
- *     responses:
- *       200:
- *         description: Transaction updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: boolean
- *                 message:
- *                   type: string
- *                 data:
- *                   type: object
- *                   properties:
- *                     fasttag:
- *                       $ref: '#/components/schemas/FastTagDocument'
- *                     transaction:
- *                       $ref: '#/components/schemas/FastTagTransaction'
- *       404:
- *         description: FastTag or transaction not found
- */
-router.put(
-  "/:id/transactions/:txnId",
-  guestRestrictionMiddleware,
-  fastTagController.updateTransaction.bind(fastTagController),
 );
 
 /**

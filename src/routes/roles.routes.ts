@@ -5,7 +5,6 @@ import {
   updateRole,
   deleteRole,
 } from "../controllers/user.controller.js";
-import { guestRestrictionMiddleware } from "../middleware/guest-restriction.middleware.js";
 
 const router = Router();
 
@@ -13,16 +12,16 @@ const router = Router();
  * Role Management Routes
  */
 
-// Get all roles (no restriction - GET allowed for all)
+// Get all roles
 router.get("/", getAllRoles);
 
-// Create role (restricted - guests cannot create)
-router.post("/create", guestRestrictionMiddleware, createRole);
+// Create role
+router.post("/create", createRole);
 
-// Update role (restricted - guests cannot update)
-router.put("/update", guestRestrictionMiddleware, updateRole);
+// Update role
+router.put("/update", updateRole);
 
-// Delete role (restricted - guests cannot delete)
-router.delete("/delete", guestRestrictionMiddleware, deleteRole);
+// Delete role
+router.delete("/delete", deleteRole);
 
 export default router;

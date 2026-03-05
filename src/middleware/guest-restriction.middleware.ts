@@ -26,24 +26,18 @@ export function guestRestrictionMiddleware(
       token = authHeader.substring(7);
     }
 
+    // If no token, allow the request (restriction only applies to is_guest=1)
     if (!token) {
-      return res.status(401).json({
-        status: false,
-        message: "Authentication required for this operation",
-        statuscode: 401,
-      });
+      return next();
     }
 
     // Verify JWT token
     const jwtService = new JwtService();
     const decodedToken = jwtService.verifyToken(token);
 
+    // If token is invalid, allow the request (let auth middleware handle it)
     if (!decodedToken || !decodedToken.userId) {
-      return res.status(401).json({
-        status: false,
-        message: "Invalid token or missing user information",
-        statuscode: 401,
-      });
+      return next();
     }
 
     // Get user security flags to check is_guest status
@@ -53,19 +47,16 @@ export function guestRestrictionMiddleware(
     userService
       .getUserSecurityFlagByUserId(decodedToken.userId)
       .then((securityResult: UserSecurityFlagResponse) => {
+        // If unable to get security flags, allow the request (not a guest restriction issue)
         if (!securityResult.status || !securityResult.data) {
-          return res.status(403).json({
-            status: false,
-            message: "Unable to verify user permissions",
-            statuscode: 403,
-          });
+          return next();
         }
 
         const userSecurity = Array.isArray(securityResult.data)
           ? securityResult.data[0]
           : securityResult.data;
 
-        // Check if user is a guest (is_guest = 1)
+        // ONLY restrict if user is explicitly a guest (is_guest = 1)
         if (userSecurity.is_guest === 1) {
           return res.status(403).json({
             status: false,
@@ -75,24 +66,18 @@ export function guestRestrictionMiddleware(
           });
         }
 
-        // User is not a guest, allow the operation
+        // User is not a guest (is_guest = 0 or any other value), allow all operations
         next();
       })
       .catch((error: any) => {
         console.error("Error checking user security flags:", error);
-        return res.status(500).json({
-          status: false,
-          message: "Error verifying user permissions",
-          statuscode: 500,
-        });
+        // On error, allow the request (don't block non-guest users due to errors)
+        next();
       });
   } catch (error: any) {
     console.error("Guest restriction middleware error:", error);
-    return res.status(500).json({
-      status: false,
-      message: "Internal server error during permission check",
-      statuscode: 500,
-    });
+    // On error, allow the request (don't block non-guest users due to errors)
+    next();
   }
 }
 

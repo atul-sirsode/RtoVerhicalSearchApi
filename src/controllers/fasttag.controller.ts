@@ -115,15 +115,15 @@ export class FastTagController {
 
   /**
    * PUT /api/fasttag/:id
-   * Update a FastTag document by vehicle number
+   * Update a FastTag document by document ID
    */
   async updateFastTag(req: Request, res: Response): Promise<void> {
     try {
-      const { vehicleNumber } = req.params;
+      const { id } = req.params;
       const data: UpdateFastTagRequest = req.body;
 
       const result = await this.fastTagService.updateFastTag(
-        vehicleNumber as string,
+        id as string,
         data,
       );
 
@@ -219,17 +219,16 @@ export class FastTagController {
   }
 
   /**
-   * PUT /api/fasttag/:id/transactions/:txnId
-   * Update a transaction in a FastTag document
+   * PUT /api/fasttag/:id
+   * Update a FastTag document
    */
   async updateTransaction(req: Request, res: Response): Promise<void> {
     try {
-      const { id, txnId } = req.params;
-      const updateData: UpdateTransactionRequest = req.body;
+      const { id } = req.params;
+      const updateData: UpdateFastTagRequest = req.body;
 
       const result = await this.fastTagService.updateTransaction(
         id as string,
-        txnId as string,
         updateData,
       );
 

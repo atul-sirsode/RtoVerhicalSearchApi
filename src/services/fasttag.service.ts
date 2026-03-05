@@ -253,7 +253,8 @@ export class FastTagService {
       const fasttag = await FastTagModel.findOne({
         vehicleNumber: vehicleNumber.toUpperCase(),
       });
-
+      console.log("fastTag", fasttag);
+      console.log("vehicleNumber", vehicleNumber);
       if (!fasttag) {
         return {
           status: false,
@@ -323,59 +324,25 @@ export class FastTagService {
    * Update a FastTag document by vehicle number
    */
   async updateFastTag(
-    vehicleNumber: string,
+    documentId: string,
     data: UpdateFastTagRequest,
   ): Promise<FastTagApiResponse<FastTagDocument>> {
     try {
-      if (!vehicleNumber || vehicleNumber.trim() === "") {
+      if (!documentId || documentId.trim() === "") {
         return {
           status: false,
-          message: "Vehicle number is required",
+          message: "Document ID is required",
           statuscode: 400,
         };
       }
 
-      // If vehicle number is being updated, check for duplicates
-      if (
-        data.vehicleNumber &&
-        data.vehicleNumber.toUpperCase() !== vehicleNumber.toUpperCase()
-      ) {
-        const existingFastTag = await FastTagModel.findOne({
-          vehicleNumber: data.vehicleNumber.toUpperCase(),
-        });
-
-        if (existingFastTag) {
-          // Update the existing record with new details instead of throwing error
-          const updatedExisting = await FastTagModel.findOneAndUpdate(
-            { vehicleNumber: data.vehicleNumber.toUpperCase() },
-            {
-              ...data,
-              vehicleNumber: data.vehicleNumber.toUpperCase(),
-              updatedAt: new Date(),
-            },
-            { returnDocument: "after", runValidators: true },
-          );
-
-          if (updatedExisting) {
-            return {
-              status: true,
-              message:
-                "FastTag updated successfully (merged with existing record)",
-              data: updatedExisting.toObject(),
-            };
-          } else {
-            return {
-              status: false,
-              message: "Failed to update existing FastTag record",
-              statuscode: 500,
-            };
-          }
-        }
+      // Normalize vehicle number if provided
+      if (data.vehicleNumber) {
         data.vehicleNumber = data.vehicleNumber.toUpperCase();
       }
-
-      const updatedFastTag = await FastTagModel.findOneAndUpdate(
-        { vehicleNumber: vehicleNumber.toUpperCase() },
+      console.log("data", data);
+      const updatedFastTag = await FastTagModel.findByIdAndUpdate(
+        documentId,
         { ...data, updatedAt: new Date() },
         { returnDocument: "after", runValidators: true },
       );
@@ -473,23 +440,49 @@ export class FastTagService {
         };
       }
 
-      // Add the new transaction with generated ID
-      const newTransaction = {
-        ...transactionData,
-        id: transactionData.id || new Types.ObjectId().toString(),
-      };
-      fasttag.transactions.push(newTransaction);
+      // Generate ID if not provided
+      const transactionId =
+        transactionData.id || new Types.ObjectId().toString();
 
-      const updatedFastTag = await fasttag.save();
+      // Ensure transactions array exists
+      if (!fasttag.transactions) {
+        fasttag.transactions = [];
+      }
 
-      // Return the newly added transaction
-      const addedTransaction =
-        updatedFastTag.transactions[updatedFastTag.transactions.length - 1];
+      // Check if transaction with this ID already exists
+      const existingTransactionIndex = fasttag.transactions.findIndex(
+        (t) => t.id === transactionId,
+      );
+
+      let updatedTransaction: FastTagTransaction;
+      let message: string;
+
+      if (existingTransactionIndex !== -1) {
+        // Update existing transaction
+        fasttag.transactions[existingTransactionIndex] = {
+          ...fasttag.transactions[existingTransactionIndex],
+          ...transactionData,
+          id: transactionId,
+        };
+        updatedTransaction = fasttag.transactions[existingTransactionIndex];
+        message = "Transaction updated successfully";
+      } else {
+        // Add new transaction
+        const newTransaction = {
+          ...transactionData,
+          id: transactionId,
+        };
+        fasttag.transactions.push(newTransaction);
+        updatedTransaction = newTransaction;
+        message = "Transaction added successfully";
+      }
+
+      await fasttag.save();
 
       return {
         status: true,
-        message: "Transaction added successfully",
-        data: addedTransaction!,
+        message,
+        data: updatedTransaction!,
       };
     } catch (error) {
       console.error("Error in addTransaction:", error);
@@ -502,25 +495,22 @@ export class FastTagService {
   }
 
   /**
-   * Update a transaction in a FastTag document
+   * Update a FastTag document
    */
   async updateTransaction(
-    vehicleNumber: string,
-    transactionId: string,
-    transactionData: UpdateTransactionRequest,
-  ): Promise<FastTagApiResponse<FastTagTransaction>> {
+    documentId: string,
+    updateData: UpdateFastTagRequest,
+  ): Promise<FastTagApiResponse<FastTagDocument>> {
     try {
-      if (!vehicleNumber || vehicleNumber.trim() === "") {
+      if (!documentId || documentId.trim() === "") {
         return {
           status: false,
-          message: "Vehicle number is required",
+          message: "Document ID is required",
           statuscode: 400,
         };
       }
-
-      const fasttag = await FastTagModel.findOne({
-        vehicleNumber: vehicleNumber.toUpperCase(),
-      });
+      console.log("updateData", updateData, documentId);
+      const fasttag = await FastTagModel.findById(documentId);
 
       if (!fasttag) {
         return {
@@ -530,37 +520,38 @@ export class FastTagService {
         };
       }
 
-      // Find the transaction
-      const transactionIndex = fasttag.transactions.findIndex(
-        (tx) => tx.id === transactionId,
-      );
-
-      if (transactionIndex === -1) {
-        return {
-          status: false,
-          message: "Transaction not found",
-          statuscode: 404,
-        };
+      // Update FastTag document fields
+      if (updateData.ownerName !== undefined) {
+        fasttag.ownerName = updateData.ownerName;
       }
-
-      // Update the transaction
-      const transaction = fasttag.transactions[transactionIndex];
-      if (transaction) {
-        Object.assign(transaction, transactionData);
+      if (updateData.mobile !== undefined) {
+        fasttag.mobile = updateData.mobile;
+      }
+      if (updateData.carModel !== undefined) {
+        fasttag.carModel = updateData.carModel;
+      }
+      if (updateData.openingBalance !== undefined) {
+        fasttag.openingBalance = updateData.openingBalance;
+      }
+      if (updateData.formType !== undefined) {
+        fasttag.formType = updateData.formType;
+      }
+      if (updateData.vehicleNumber !== undefined) {
+        fasttag.vehicleNumber = updateData.vehicleNumber.toUpperCase();
       }
 
       const updatedFastTag = await fasttag.save();
 
       return {
         status: true,
-        message: "Transaction updated successfully",
-        data: updatedFastTag.transactions[transactionIndex]!,
+        message: "FastTag updated successfully",
+        data: updatedFastTag,
       };
     } catch (error) {
       console.error("Error in updateTransaction:", error);
       return {
         status: false,
-        message: "Failed to update transaction",
+        message: "Failed to update FastTag",
         statuscode: 500,
       };
     }
@@ -570,21 +561,27 @@ export class FastTagService {
    * Delete a transaction from a FastTag document
    */
   async deleteTransaction(
-    vehicleNumber: string,
+    documentId: string,
     transactionId: string,
   ): Promise<FastTagApiResponse<null>> {
     try {
-      if (!vehicleNumber || vehicleNumber.trim() === "") {
+      if (!documentId || documentId.trim() === "") {
         return {
           status: false,
-          message: "Vehicle number is required",
+          message: "Document ID is required",
           statuscode: 400,
         };
       }
 
-      const fasttag = await FastTagModel.findOne({
-        vehicleNumber: vehicleNumber.toUpperCase(),
-      });
+      if (!transactionId || transactionId.trim() === "") {
+        return {
+          status: false,
+          message: "Transaction ID is required",
+          statuscode: 400,
+        };
+      }
+
+      const fasttag = await FastTagModel.findById(documentId);
 
       if (!fasttag) {
         return {
