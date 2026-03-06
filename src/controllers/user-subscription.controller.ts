@@ -25,7 +25,8 @@ export class UserSubscriptionController {
         username: req.query.username as string,
       };
 
-      const result = await this.userSubscriptionService.getUserSubscriptions(query);
+      const result =
+        await this.userSubscriptionService.getUserSubscriptions(query);
 
       if (result.status) {
         res.status(200).json(result);
@@ -50,7 +51,8 @@ export class UserSubscriptionController {
     try {
       const data: CreateUserSubscriptionRequest = req.body;
 
-      const result = await this.userSubscriptionService.createUserSubscription(data);
+      const result =
+        await this.userSubscriptionService.createUserSubscription(data);
 
       if (result.status) {
         res.status(201).json(result);
@@ -71,12 +73,16 @@ export class UserSubscriptionController {
    * GET /api/user-subscriptions/:username
    * Get a single user subscription by username
    */
-  async getUserSubscriptionByUsername(req: Request, res: Response): Promise<void> {
+  async getUserSubscriptionByUsername(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
     try {
       const { username } = req.params;
-      const result = await this.userSubscriptionService.getUserSubscriptionByUsername(
-        username as string
-      );
+      const result =
+        await this.userSubscriptionService.getUserSubscriptionByUsername(
+          username as string,
+        );
 
       if (result.status) {
         res.status(200).json(result);
@@ -84,7 +90,10 @@ export class UserSubscriptionController {
         res.status(result.statuscode || 500).json(result);
       }
     } catch (error) {
-      console.error("Controller error in getUserSubscriptionByUsername:", error);
+      console.error(
+        "Controller error in getUserSubscriptionByUsername:",
+        error,
+      );
       res.status(500).json({
         status: false,
         message: "Internal server error",
@@ -94,17 +103,17 @@ export class UserSubscriptionController {
   }
 
   /**
-   * PUT /api/user-subscriptions/:username
-   * Update a user subscription by username
+   * PUT /api/user-subscriptions/:id
+   * Update a user subscription by id
    */
   async updateUserSubscription(req: Request, res: Response): Promise<void> {
     try {
-      const { username } = req.params;
+      const { id } = req.params;
       const data: UpdateUserSubscriptionRequest = req.body;
 
       const result = await this.userSubscriptionService.updateUserSubscription(
-        username as string,
-        data
+        id as string,
+        data,
       );
 
       if (result.status) {
@@ -123,14 +132,14 @@ export class UserSubscriptionController {
   }
 
   /**
-   * DELETE /api/user-subscriptions/:username
-   * Delete a user subscription by username
+   * DELETE /api/user-subscriptions/:id
+   * Delete a user subscription by id
    */
   async deleteUserSubscription(req: Request, res: Response): Promise<void> {
     try {
-      const { username } = req.params;
+      const { id } = req.params;
       const result = await this.userSubscriptionService.deleteUserSubscription(
-        username as string
+        id as string,
       );
 
       if (result.status) {

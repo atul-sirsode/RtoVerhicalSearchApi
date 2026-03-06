@@ -99,6 +99,37 @@ export class UserSubscriptionModel {
   }
 
   /**
+   * Get a single user subscription by ID
+   */
+  async findById(id: string): Promise<UserSubscription | null> {
+    const query = `
+      SELECT 
+        id, 
+        username, 
+        DATE_FORMAT(start_date, '%Y-%m-%d') as start_date,
+        validity_days,
+        DATE_FORMAT(end_date, '%Y-%m-%d') as end_date,
+        DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') as created_at,
+        DATE_FORMAT(updated_at, '%Y-%m-%d %H:%i:%s') as updated_at
+      FROM user_subscriptions 
+      WHERE id = ?
+    `;
+
+    const [rows] = await this.pool.execute(query, [id]);
+    const result = (rows as any[])[0];
+
+    if (!result) return null;
+
+    return {
+      ...result,
+      start_date: new Date(result.start_date),
+      end_date: new Date(result.end_date),
+      created_at: new Date(result.created_at),
+      updated_at: new Date(result.updated_at),
+    };
+  }
+
+  /**
    * Create a new user subscription
    */
   async create(data: CreateUserSubscriptionRequest): Promise<UserSubscription> {
@@ -190,11 +221,78 @@ export class UserSubscriptionModel {
   }
 
   /**
+   * Update a user subscription by ID
+   */
+  async updateById(
+    id: string,
+    data: UpdateUserSubscriptionRequest,
+  ): Promise<UserSubscription | null> {
+    const existing = await this.findById(id);
+    if (!existing) return null;
+
+    const updates: string[] = [];
+    const params: any[] = [];
+
+    if (data.username !== undefined) {
+      updates.push("username = ?");
+      params.push(data.username);
+    }
+
+    if (data.start_date !== undefined) {
+      updates.push("start_date = ?");
+      params.push(data.start_date);
+    }
+
+    if (data.validity_days !== undefined) {
+      updates.push("validity_days = ?");
+      params.push(data.validity_days);
+    }
+
+    if (updates.length === 0) return existing;
+
+    // If start_date or validity_days changed, recalculate end_date
+    if (data.start_date !== undefined || data.validity_days !== undefined) {
+      const newStartDate = data.start_date
+        ? new Date(data.start_date)
+        : existing.start_date;
+      const newValidityDays = data.validity_days ?? existing.validity_days;
+      const newEndDate = new Date(newStartDate);
+      newEndDate.setDate(newEndDate.getDate() + newValidityDays);
+
+      updates.push("end_date = ?");
+      params.push(newEndDate.toISOString().split("T")[0]);
+    }
+
+    updates.push("updated_at = CURRENT_TIMESTAMP");
+    params.push(id);
+
+    const query = `
+      UPDATE user_subscriptions 
+      SET ${updates.join(", ")}
+      WHERE id = ?
+    `;
+
+    await this.pool.execute(query, params);
+
+    // Get the updated record
+    return await this.findById(id);
+  }
+
+  /**
    * Delete a user subscription by username
    */
   async deleteByUsername(username: string): Promise<boolean> {
     const query = "DELETE FROM user_subscriptions WHERE username = ?";
     const [result] = await this.pool.execute(query, [username]);
+    return (result as any).affectedRows > 0;
+  }
+
+  /**
+   * Delete a user subscription by ID
+   */
+  async deleteById(id: string): Promise<boolean> {
+    const query = "DELETE FROM user_subscriptions WHERE id = ?";
+    const [result] = await this.pool.execute(query, [id]);
     return (result as any).affectedRows > 0;
   }
 

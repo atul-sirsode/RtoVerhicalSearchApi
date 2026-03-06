@@ -222,17 +222,17 @@ router.get(
 
 /**
  * @swagger
- * /api/user-subscriptions/{username}:
+ * /api/user-subscriptions/{id}:
  *   put:
  *     summary: Update a user subscription
  *     tags: [User Subscriptions]
  *     parameters:
  *       - in: path
- *         name: username
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: User's username
+ *         description: Subscription ID
  *     requestBody:
  *       required: true
  *       content:
@@ -261,7 +261,7 @@ router.get(
  *         description: Internal server error
  */
 router.put(
-  "/:username",
+  "/:id",
   guestRestrictionMiddleware,
   userSubscriptionController.updateUserSubscription.bind(
     userSubscriptionController,
@@ -270,17 +270,17 @@ router.put(
 
 /**
  * @swagger
- * /api/user-subscriptions/{username}:
+ * /api/user-subscriptions/{id}:
  *   delete:
  *     summary: Delete a user subscription
  *     tags: [User Subscriptions]
  *     parameters:
  *       - in: path
- *         name: username
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: User's username
+ *         description: Subscription ID
  *     responses:
  *       200:
  *         description: User subscription deleted successfully
@@ -300,14 +300,14 @@ router.put(
  *                   nullable: true
  *                   example: null
  *       400:
- *         description: Bad request - Invalid username
+ *         description: Bad request - Invalid ID
  *       404:
  *         description: User subscription not found
  *       500:
  *         description: Internal server error
  */
 router.delete(
-  "/:username",
+  "/:id",
   guestRestrictionMiddleware,
   userSubscriptionController.deleteUserSubscription.bind(
     userSubscriptionController,

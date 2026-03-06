@@ -172,19 +172,27 @@ export class UserSubscriptionService {
 
       // Check if subscription already exists
       const existing = await this.model.exists(data.username);
-      if (existing) {
-        return {
-          status: false,
-          message: "Subscription already exists for this username",
-          statuscode: 409,
-        };
-      }
 
-      const subscription = await this.model.create(data);
+      let subscription: UserSubscription;
+      let message: string;
+
+      if (existing) {
+        // Update existing subscription
+        const updated = await this.model.updateByUsername(data.username, data);
+        if (!updated) {
+          throw new Error("Failed to update subscription");
+        }
+        subscription = updated;
+        message = "User subscription updated successfully";
+      } else {
+        // Create new subscription
+        subscription = await this.model.create(data);
+        message = "User subscription created successfully";
+      }
 
       return {
         status: true,
-        message: "User subscription created successfully",
+        message,
         data: subscription,
       };
     } catch (error) {
@@ -201,16 +209,16 @@ export class UserSubscriptionService {
    * Update a user subscription by username
    */
   async updateUserSubscription(
-    username: string,
+    id: string,
     data: UpdateUserSubscriptionRequest,
   ): Promise<UserSubscriptionApiResponse<UserSubscription>> {
     try {
       await this.initDb();
 
-      if (!username || username.trim() === "") {
+      if (!id || id.trim() === "") {
         return {
           status: false,
-          message: "Username is required",
+          message: "ID is required",
           statuscode: 400,
         };
       }
@@ -241,7 +249,7 @@ export class UserSubscriptionService {
         throw new Error("Database model not initialized");
       }
 
-      const subscription = await this.model.updateByUsername(username, data);
+      const subscription = await this.model.updateById(id, data);
 
       if (!subscription) {
         return {
@@ -270,15 +278,15 @@ export class UserSubscriptionService {
    * Delete a user subscription by username
    */
   async deleteUserSubscription(
-    username: string,
+    id: string,
   ): Promise<UserSubscriptionApiResponse<null>> {
     try {
       await this.initDb();
 
-      if (!username || username.trim() === "") {
+      if (!id || id.trim() === "") {
         return {
           status: false,
-          message: "Username is required",
+          message: "ID is required",
           statuscode: 400,
         };
       }
@@ -287,7 +295,7 @@ export class UserSubscriptionService {
         throw new Error("Database model not initialized");
       }
 
-      const deleted = await this.model.deleteByUsername(username);
+      const deleted = await this.model.deleteById(id);
 
       if (!deleted) {
         return {
