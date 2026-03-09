@@ -1,4 +1,5 @@
 import FastTagModel from "../models/fasttag.model.js";
+import { UserService } from "./user.service.js";
 import type {
   FastTagDocument,
   CreateFastTagRequest,
@@ -14,6 +15,8 @@ import type {
 import { Types } from "mongoose";
 
 export class FastTagService {
+  private userService = new UserService();
+
   /**
    * Get all FastTag documents with optional filtering and pagination
    */
@@ -42,7 +45,30 @@ export class FastTagService {
       }
 
       if (actualFormType) {
-        filter.formType = actualFormType.toLowerCase();
+        // Check if actualFormType is "all" or "all banks"
+        if (
+          actualFormType.toLowerCase() === "all" ||
+          actualFormType.toLowerCase() === "all banks"
+        ) {
+          // Get all banks and use their codes as formTypes
+          const banksResponse = await this.userService.getAllBanks();
+          if (banksResponse.status && banksResponse.data) {
+            const bankCodes = banksResponse.data.map((bank) =>
+              bank.code.toLowerCase(),
+            );
+            filter.formType = { $in: bankCodes };
+          } else {
+            // If we can't get banks, return empty result
+            return {
+              status: false,
+              message: "Unable to retrieve bank codes for formType filtering",
+              statuscode: 500,
+            };
+          }
+        } else {
+          // Use specific formType
+          filter.formType = actualFormType.toLowerCase();
+        }
       }
 
       let queryBuilder = FastTagModel.find(filter);
@@ -150,16 +176,9 @@ export class FastTagService {
     endDate: string,
     page: number = 1,
     limit: number = 10,
+    vehicleNumber?: string,
   ): Promise<FastTagApiResponse<FastTagListResponse>> {
     try {
-      if (!formType || formType.trim() === "") {
-        return {
-          status: false,
-          message: "Form type is required",
-          statuscode: 400,
-        };
-      }
-
       if (!startDate || startDate.trim() === "") {
         return {
           status: false,
@@ -198,15 +217,48 @@ export class FastTagService {
 
       const skip = (page - 1) * limit;
 
-      // Build query: formType matches AND (updatedAt is null OR updatedAt is between dates)
-      const query = {
-        formType: formType.toLowerCase(),
+      // Build query: formType matches (if provided) AND (updatedAt is null OR updatedAt is between dates) AND optional vehicleNumber filter
+      const query: any = {
         $or: [
           { updatedAt: { $exists: false } },
           { updatedAt: null },
           { updatedAt: { $gte: start, $lte: end } },
         ],
       };
+
+      // Add formType filter if provided, otherwise get all bank codes
+      if (
+        formType &&
+        formType.trim() !== "" &&
+        formType.toLowerCase() !== "all banks" &&
+        formType.toLowerCase() !== "all"
+      ) {
+        query.formType = formType.toLowerCase();
+      } else {
+        // formType is null, empty, "all banks", or "ALL", get all banks and use their codes as formTypes
+        const banksResponse = await this.userService.getAllBanks();
+        if (banksResponse.status && banksResponse.data) {
+          const bankCodes = banksResponse.data.map((bank) =>
+            bank.code.toLowerCase(),
+          );
+          query.formType = { $in: bankCodes };
+        } else {
+          // If we can't get banks, return empty result
+          return {
+            status: false,
+            message: "Unable to retrieve bank codes for formType filtering",
+            statuscode: 500,
+          };
+        }
+      }
+
+      // Add vehicleNumber filter if provided
+      if (vehicleNumber && vehicleNumber.trim() !== "") {
+        query.vehicleNumber = {
+          $regex: vehicleNumber.trim(),
+          $options: "i", // case-insensitive
+        };
+      }
 
       const fasttags = await FastTagModel.find(query)
         .sort({ updatedAt: -1, createdAt: -1 })
@@ -677,6 +729,34 @@ export class FastTagService {
       return {
         status: false,
         message: "Failed to retrieve FastTag statistics",
+        statuscode: 500,
+      };
+    }
+  }
+
+  /**
+   * Get all unique bank codes/formTypes from FastTag collection
+   */
+  async getAllBankCodes(): Promise<FastTagApiResponse<string[]>> {
+    try {
+      const bankCodes = await FastTagModel.distinct("formType");
+
+      // Filter out null/empty values and sort
+      const filteredCodes = bankCodes
+        .filter((code: string | null) => code && code.trim() !== "")
+        .map((code: string) => code.trim())
+        .sort();
+
+      return {
+        status: true,
+        message: "Bank codes retrieved successfully",
+        data: filteredCodes,
+      };
+    } catch (error) {
+      console.error("Error getting bank codes:", error);
+      return {
+        status: false,
+        message: "Failed to retrieve bank codes",
         statuscode: 500,
       };
     }

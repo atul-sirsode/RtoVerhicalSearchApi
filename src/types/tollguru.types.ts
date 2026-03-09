@@ -13,6 +13,7 @@ export interface TollGuruRequest {
   vehicle: TollGuruVehicle;
   country: string;
   departureTime?: string;
+  toll_label?: string;
 }
 
 // TollGuru API Response Interfaces

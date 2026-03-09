@@ -8,6 +8,7 @@ import rcV2Routes from "./routes/rc.v2.routes.js";
 import fileHistoryRoutes from "./routes/file-history.routes.js";
 import statesCitiesRoutes from "./routes/states-cities.routes.js";
 import tollGuruRoutes from "./routes/tollguru.routes.js";
+import lightweightTollGuruRoutes from "./routes/lightweight-tollguru.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import permissionsRoutes from "./routes/permissions.routes.js";
 import rolesRoutes from "./routes/roles.routes.js";
@@ -18,6 +19,7 @@ import userRolesRoutes from "./routes/user-roles.routes.js";
 import userSecurityFlagsRoutes from "./routes/user-security-flags.routes.js";
 import fastTagRoutes from "./routes/fasttag.routes.js";
 import userSubscriptionRoutes from "./routes/user-subscription.routes.js";
+import autoAdjustAmountRoutes from "./routes/auto-adjust-amount.routes.js";
 import debugRoutes from "./routes/debug.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { swaggerAuthMiddleware } from "./middleware/swagger-auth.middleware.js";
@@ -33,6 +35,8 @@ app.use(
   cors({
     origin: [
       "https://rtovehicalsearch.transcologistic.in",
+      "https://transcologistic.atulsirsode.cloud",
+      "http://transcologistic.atulsirsode.cloud",
       "http://localhost:3000",
       "http://localhost:5173",
       "http://localhost:5174",
@@ -49,6 +53,7 @@ app.use("/api/rc", rcRoutes);
 app.use("/api/file-history", fileHistoryRoutes);
 app.use("/api/states-cities", statesCitiesRoutes);
 app.use("/api/tollguru", tollGuruRoutes);
+app.use("/api/lightweight-tollguru", lightweightTollGuruRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/permissions", permissionsRoutes);
 app.use("/api/roles", rolesRoutes);
@@ -59,6 +64,7 @@ app.use("/api/user-roles", userRolesRoutes);
 app.use("/api/user-security-flags", userSecurityFlagsRoutes);
 app.use("/api/fasttag", fastTagRoutes);
 app.use("/api/user-subscriptions", userSubscriptionRoutes);
+app.use("/api/auto-adjust-amount", autoAdjustAmountRoutes);
 
 // Debug routes for testing
 app.use("/api/debug", debugRoutes);

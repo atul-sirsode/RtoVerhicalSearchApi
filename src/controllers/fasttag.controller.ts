@@ -314,18 +314,49 @@ export class FastTagController {
     res: Response,
   ): Promise<void> {
     try {
-      const { formType } = req.params;
-      const { startDate, endDate } = req.query;
-      const page = parseInt(req.query.page as string) || 1;
-      const limit = parseInt(req.query.limit as string) || 10;
+      const { formType: pathFormType } = req.params;
+      const {
+        startDate,
+        endDate,
+        vehicleNumber,
+        formType: queryFormType,
+      } = req.query;
+
+      // Use formType from path if available, otherwise from query (handle array case)
+      const formType =
+        pathFormType ||
+        (Array.isArray(queryFormType)
+          ? queryFormType[0]
+          : (queryFormType as string));
+
+      const pageParam = Array.isArray(req.query.page)
+        ? req.query.page[0]
+        : req.query.page;
+      const limitParam = Array.isArray(req.query.limit)
+        ? req.query.limit[0]
+        : req.query.limit;
+
+      const page = parseInt(pageParam as string) || 1;
+      const limit = parseInt(limitParam as string) || 10;
+
+      const startDateParam = Array.isArray(startDate)
+        ? String(startDate[0] || "")
+        : String(startDate || "");
+      const endDateParam = Array.isArray(endDate)
+        ? String(endDate[0] || "")
+        : String(endDate || "");
+      const vehicleNumberParam = Array.isArray(vehicleNumber)
+        ? String(vehicleNumber[0] || "")
+        : String(vehicleNumber || "");
 
       const result =
         await this.fastTagService.getFastTagsByFormTypeAndDateRange(
-          formType as string,
-          startDate as string,
-          endDate as string,
+          (formType as string) || "", // Pass empty string if no formType provided
+          startDateParam, // Now guaranteed to be string
+          endDateParam, // Now guaranteed to be string
           page,
           limit,
+          vehicleNumberParam,
         );
 
       if (result.status) {
@@ -361,6 +392,29 @@ export class FastTagController {
       }
     } catch (error) {
       console.error("Controller error in getFastTagStats:", error);
+      res.status(500).json({
+        status: false,
+        message: "Internal server error",
+        statuscode: 500,
+      });
+    }
+  }
+
+  /**
+   * GET /api/fasttag/bank-codes
+   * Get all unique bank codes/formTypes
+   */
+  async getBankCodes(req: Request, res: Response): Promise<void> {
+    try {
+      const result = await this.fastTagService.getAllBankCodes();
+
+      if (result.status) {
+        res.status(200).json(result);
+      } else {
+        res.status(result.statuscode || 500).json(result);
+      }
+    } catch (error) {
+      console.error("Controller error in getBankCodes:", error);
       res.status(500).json({
         status: false,
         message: "Internal server error",

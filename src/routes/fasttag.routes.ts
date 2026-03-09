@@ -266,6 +266,100 @@ router.post(
 
 /**
  * @swagger
+ * /api/fasttag/daterange:
+ *   get:
+ *     summary: Get FastTags by date range with optional filters
+ *     tags: [FastTag]
+ *     description: Retrieve FastTag documents filtered by updatedAt date range with optional formType and vehicleNumber filters. Includes records with null updatedAt or updatedAt between specified dates.
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Start date for date range filter (YYYY-MM-DD)
+ *         example: "2024-01-01"
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: End date for date range filter (YYYY-MM-DD)
+ *         example: "2024-12-31"
+ *       - in: query
+ *         name: formType
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional form type filter (if not provided, will use all bank codes)
+ *         example: "hdfc"
+ *       - in: query
+ *         name: vehicleNumber
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional vehicle number filter (case-insensitive partial match)
+ *         example: "MH12AB1234"
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number for pagination
+ *         example: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of items per page
+ *         example: 10
+ *     responses:
+ *       200:
+ *         description: FastTags retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "FastTags retrieved successfully by form type and date range"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     fasttags:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/FastTagDocument'
+ *                     total:
+ *                       type: integer
+ *                       example: 25
+ *                     page:
+ *                       type: integer
+ *                       example: 1
+ *                     limit:
+ *                       type: integer
+ *                       example: 10
+ *       400:
+ *         description: Bad request - missing or invalid parameters
+ *       500:
+ *         description: Internal server error
+ */
+router.get(
+  "/daterange",
+  fastTagController.getFastTagsByFormTypeAndDateRange.bind(fastTagController),
+);
+
+/**
+ * @swagger
  * /api/fasttag/{vehicleNumber}:
  *   get:
  *     summary: Get a single FastTag by vehicle number
@@ -524,6 +618,44 @@ router.get("/stats", fastTagController.getFastTagStats.bind(fastTagController));
 
 /**
  * @swagger
+ * /api/fasttag/bank-codes:
+ *   get:
+ *     summary: Get all unique bank codes/formTypes
+ *     description: Retrieve all unique form types (bank codes) from FastTag collection
+ *     tags: [FastTag]
+ *     responses:
+ *       200:
+ *         description: Bank codes retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Bank codes retrieved successfully"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["blackbuck", "hdfc", "icici"]
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ */
+router.get(
+  "/bank-codes",
+  fastTagController.getBankCodes.bind(fastTagController),
+);
+
+/**
+ * @swagger
  * /api/fasttag/formType/{formType}:
  *   get:
  *     summary: Get FastTags by form type
@@ -603,8 +735,8 @@ router.get(
  *         required: true
  *         schema:
  *           type: string
- *         description: The form type to filter by
- *         example: "blackbuck"
+ *         description: Form type to filter by
+ *         example: "hdfc"
  *       - in: query
  *         name: startDate
  *         required: true
@@ -622,19 +754,28 @@ router.get(
  *         description: End date for date range filter (YYYY-MM-DD)
  *         example: "2024-12-31"
  *       - in: query
+ *         name: vehicleNumber
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional vehicle number filter (case-insensitive partial match)
+ *         example: "MH12AB1234"
+ *       - in: query
  *         name: page
  *         required: false
  *         schema:
  *           type: integer
  *           default: 1
  *         description: Page number for pagination
+ *         example: 1
  *       - in: query
  *         name: limit
  *         required: false
  *         schema:
  *           type: integer
  *           default: 10
- *         description: Number of records per page
+ *         description: Number of items per page
+ *         example: 10
  *     responses:
  *       200:
  *         description: FastTags retrieved successfully
@@ -673,6 +814,53 @@ router.get(
 router.get(
   "/formType/:formType/daterange",
   fastTagController.getFastTagsByFormTypeAndDateRange.bind(fastTagController),
+);
+
+/**
+ * @swagger
+ * /api/fasttag/{id}/transactions:
+ *   post:
+ *     summary: Add a transaction to a FastTag document
+ *     tags: [FastTag]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: FastTag document ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               transaction:
+ *                 $ref: '#/components/schemas/FastTagTransaction'
+ *     responses:
+ *       200:
+ *         description: Transaction added successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/FastTagDocument'
+ *       404:
+ *         description: FastTag not found
+ *       409:
+ *         description: Conflict - Transaction ID already exists
+ */
+router.post(
+  "/:id/transactions",
+  guestRestrictionMiddleware,
+  fastTagController.addTransaction.bind(fastTagController),
 );
 
 export default router;
